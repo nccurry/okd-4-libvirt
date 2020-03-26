@@ -42,9 +42,9 @@
   "systemd": {
     "units": [
       {
-        "name": "container.service",
+        "name": "haproxy.service",
         "enabled": true,
-        "contents": "{{ lookup('file', playbook_dir + '/../files/container.service') | replace('\n', '\\n') }}"
+        "contents": "{{ lookup('file', playbook_dir + '/../files/haproxy.service') | replace('\n', '\\n') }}"
       }
     ]
   }
