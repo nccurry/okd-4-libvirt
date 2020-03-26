@@ -1,14 +1,10 @@
-# https://cbonte.github.io/haproxy-dconv/2.2/configuration.html
-
 global
+    uid          1000
+    gid          1000
     log         127.0.0.1 local2
-    chroot      /var/lib/haproxy
     pidfile     /var/run/haproxy.pid
-    maxconn     4000
-    user        haproxy
-    group       haproxy
+    maxconn     400
     daemon
-    stats socket /var/lib/haproxy/stats
 
 defaults
     mode                    tcp
@@ -23,14 +19,6 @@ defaults
     timeout server          1m
     timeout http-keep-alive 10s
     timeout check           10s
-    maxconn                 3000
-
-listen stats
-    bind :9000
-    mode http
-    stats enable
-    stats uri /
-    monitor-uri /healthz
 
 frontend api
     bind *:6443
@@ -38,9 +26,9 @@ frontend api
 
 backend api
     server {{ bootstrap_vms[0].name }} {{ bootstrap_vms[0].ip }}:6443 check
-    {% for m in master_vms %}
+{% for m in master_vms %}
     server {{ m.name }} {{ m.ip }}:6443 check
-    {% endfor %}
+{% endfor %}
 
 frontend machine_config
     bind *:22623
@@ -48,30 +36,30 @@ frontend machine_config
 
 backend machine_config
     server {{ bootstrap_vms[0].name }} {{ bootstrap_vms[0].ip }}:22623 check
-    {% for vm in master_vms %}
+{% for vm in master_vms %}
     server {{ vm.name }} {{ vm.ip }}:22623 check
-    {% endfor %}
+{% endfor %}
 
 frontend ingress_http
     bind *:80
     default_backend ingress_http
 
 backend ingress_http
-    {% for vm in master_vms %}
+{% for vm in master_vms %}
     server {{ vm.name }} {{ vm.ip }}:80 check
-    {% endfor %}
-    {% for vm in worker_vms %}
+{% endfor %}
+{% for vm in worker_vms %}
     server {{ vm.name }} {{ vm.ip }}:80 check
-    {% endfor %}
+{% endfor %}
 
 frontend ingress_https
     bind *:443
     default_backend ingress_https
 
 backend ingress_https
-    {% for vm in master_vms %}
+{% for vm in master_vms %}
     server {{ vm.name }} {{ vm.ip }}:443 check
-    {% endfor %}
-    {% for vm in worker_vms %}
+{% endfor %}
+{% for vm in worker_vms %}
     server {{ vm.name }} {{ vm.ip }}:443 check
-    {% endfor %}
+{% endfor %}
