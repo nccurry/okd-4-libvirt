@@ -1,0 +1,51 @@
+{
+  "ignition": {
+    "config": {
+      "replace": {
+        "source": null,
+        "verification": {}
+      }
+    },
+    "security": {
+      "tls": {}
+    },
+    "timeouts": {},
+    "version": "3.0.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "sshAuthorizedKeys": [
+          "{{ ssh_key.public_key }}"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/home/core/haproxy/haproxy.cfg",
+        "contents": {
+          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/haproxy.cfg.j2') | urlencode }}"
+        },
+        "mode": 438,
+        "user": {
+          "name": "core"
+        },
+        "group": {
+          "name": "core"
+        }
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "name": "container.service",
+        "enabled": true,
+        "contents": "{{ lookup('file', playbook_dir + '/../files/container.service') | replace('\n', '\\n') }}"
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+<domain xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
+  <name>{{ item.name }}</name>
+  <metadata>
+    <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+      <libosinfo:os id="http://fedoraproject.org/fedora/{{ fedora_version }}"/>
+    </libosinfo:libosinfo>
+  </metadata>
+  <memory unit='MiB'>{{ item.memory }}</memory>
+  <vcpu placement='static'>{{ item.cpus }}</vcpu>
+  <os>
+    <type arch='x86_64'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='network'>
+      <mac address='{{ item.mac }}'/>
+      <source network='{{ cluster_name }}.{{ network.domain_suffix }}' bridge='{{ network.bridge_name }}'/>
+      <model type='e1000'/>
+    </interface>
+    <console type="pty">
+      <target type="virtio" port="0"/>
+    </console>
+  </devices>
+  <qemu:commandline>
+    <qemu:arg value="-fw_cfg"/>
+    <qemu:arg value="name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.ign"/>
+  </qemu:commandline>
+</domain>

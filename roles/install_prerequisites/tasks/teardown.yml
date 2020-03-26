@@ -1,0 +1,19 @@
+- name: Stop / disable libvirtd
+  become: true
+  systemd:
+    name: libvirtd
+    enabled: false
+    state: stopped
+
+- name: Remove files
+  file:
+    state: absent
+  loop:
+  - "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
+  - "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2"
+
+- name: Delete libvirt group
+  become: true
+  group:
+    name: libvirt
+    state: absent

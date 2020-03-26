@@ -1,0 +1,82 @@
+# These parameters will not change very often
+
+# Used for kvm os
+fedora_version: 31
+
+# FCOS urls
+fcos_qcow2_url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_build }}/x86_64/fedora-coreos-{{ fcos_build }}-qemu.x86_64.qcow2.xz"
+
+# OC url
+oc_url: "https://mirror.openshift.com/pub/openshift-v4/clients/oc/{{ oc_release }}/linux/oc.tar.gz"
+
+# OKD install url
+okd_url: "registry.svc.ci.openshift.org/origin/release:{{ okd_release }}"
+
+# Host running libvirt
+# The playbooks get run on this host
+libvirt_host: localhost
+
+# Path where virtual machines will be created
+libvirt_domain_path: "{{ lookup('env', 'HOME') }}/documents/vms"
+
+# Libvirt network information
+network:
+  domain_suffix: lab.local
+  bridge_name: virbr2
+  mac: 52:54:00:1b:1c:da
+  network: 10.0.10.0/24
+  netmask: 255.255.255.0
+  broadcast: 10.0.10.255
+  gateway: 10.0.10.1
+  dhcp_start: 10.0.10.10
+  dhcp_end: 10.0.10.20
+  upstream_dns_1: 1.1.1.1
+  upstream_dns_2: 1.0.0.1
+
+# There should only ever be one utility server.
+# This is an array to match the other cluster host data structures
+utility_vms:
+- name: "{{ cluster_name }}-utility.{{ network.domain_suffix }}"
+  ip: 10.0.10.10
+  mac: 52:54:00:7b:0a:15
+  memory: 2048
+  cpus: 1
+  disk_size: 20G
+
+# There should only ever be one bootstrap server.
+# This is an array to match the other cluster host data structures
+bootstrap_vms:
+- name: "{{ cluster_name }}-bootstrap.{{ network.domain_suffix }}"
+  ip: 10.0.10.13
+  mac: 52:54:00:dc:eb:e1
+  memory: 16932
+  cpus: 4
+  disk_size: 20G
+
+master_vms:
+- name: "{{ cluster_name }}-master-0.{{ network.domain_suffix }}"
+  ip: 10.0.10.11
+  mac: 52:54:00:4a:c3:b9
+  memory: 16932
+  cpus: 4
+  disk_size: 20G
+- name: "{{ cluster_name }}-master-1.{{ network.domain_suffix }}"
+  ip: 10.0.10.12
+  mac: 52:54:00:42:3a:1d
+  memory: 16932
+  cpus: 4
+  disk_size: 20G
+- name: "{{ cluster_name }}-master-2.{{ network.domain_suffix }}"
+  ip: 10.0.10.13
+  mac: 52:54:00:9d:3c:2e
+  memory: 16932
+  cpus: 4
+  disk_size: 20G
+
+worker_vms: []
+#- name: "{{ cluster_name }}-worker.{{ network.domain_suffix }}"
+#  ip: 10.0.10.12
+#  mac: 52:54:00:72:1c:71
+#  memory: 16932
+#  cpus: 4
+#  disk_size: 20G

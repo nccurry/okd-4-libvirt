@@ -1,0 +1,15 @@
+# Unique cluster name
+cluster_name: okd
+
+# Build number and stream of fedora coreos
+# https://builds.coreos.fedoraproject.org/browser
+fcos_stream: stable
+fcos_build: 31.20200223.3.0
+
+# URL to download okd install binary
+# https://origin-release.svc.ci.openshift.org/
+okd_release: 4.4.0-0.okd-2020-03-25-142150
+
+# Version of oc client to install
+# https://mirror.openshift.com/pub/openshift-v4/clients/oc
+oc_release: 4.4

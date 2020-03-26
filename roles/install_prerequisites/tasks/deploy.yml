@@ -1,0 +1,118 @@
+- name: Update packages
+  become: true
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Install prerequisite packages
+  become: true
+  dnf:
+    name: "{{ item }}"
+  loop:
+  # Needed for libvirt
+  - "@Virtualization"
+  # Needed for virt ansible module
+  - python3-libvirt
+  # Needed to unzip xz archives
+  - xz
+
+- name: Start / enable libvirtd
+  become: true
+  systemd:
+    name: libvirtd
+    enabled: true
+    state: started
+
+- name: Download fcos qcow2 image
+  get_url:
+    url: "{{ fcos_qcow2_url }}"
+    dest: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
+  register: get_fcos
+
+- name: Unarchive fcos image
+  command:
+    cmd: "unxz fcos-{{ fcos_build }}.qcow2.xz"
+    chdir: "{{ libvirt_domain_path }}/images"
+  when: get_fcos.changed
+
+- name: Check if oc is already installed
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
+  register: oc_stat
+
+- name: Download and install oc
+  when: not oc_stat.stat.exists
+  block:
+  - name: Download oc cli archive
+    get_url:
+      url: "{{ oc_url }}"
+      dest: "/tmp/oc-{{ oc_release }}.tar.gz"
+
+  - name: Unarchive oc cli tools
+    unarchive:
+      src: "/tmp/oc-{{ oc_release }}.tar.gz"
+      dest: /tmp
+
+  - name: Ensure binary directory exists
+    file:
+      state: directory
+      path: "{{ lookup('env', 'HOME') }}/bin"
+
+  - name: Move oc cli to binary directory
+    copy:
+      src: /tmp/oc
+      dest: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
+      owner: "{{ lookup('env', 'USER') }}"
+      group: "{{ lookup('env', 'USER') }}"
+      mode: 0774
+
+  - name: Create symlink to oc cli
+    file:
+      state: link
+      force: yes
+      src: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
+      dest: "{{ lookup('env', 'HOME') }}/bin/oc"
+
+- name: Check if okd install binary is already present
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+  register: okd_stat
+
+- name: Extract and install okd-install
+  when: not okd_stat.stat.exists
+  block:
+  - name: Extract okd-install cli
+    command:
+      cmd: "{{ lookup('env', 'HOME') }}/bin/oc
+            adm
+            release
+            extract
+            --command=openshift-install
+            {{ okd_url }}"
+      chdir: /tmp
+
+  - name: Move okd install binary to ~/bin
+    copy:
+      src: /tmp/openshift-install
+      dest: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+      mode: 0774
+      owner: "{{ lookup('env', 'USER') }}"
+      group: "{{ lookup('env', 'USER') }}"
+
+  - name: Create symlink to main binary
+    file:
+      state: link
+      force: yes
+      src: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+      dest: "{{ lookup('env', 'HOME') }}/bin/okd-install"
+
+- name: Create libvirt group
+  become: true
+  group:
+    name: libvirt
+
+- name: Add user to libvirt group
+  become: true
+  user:
+    name: "{{ lookup('env', 'USER') }}"
+    group: libvirt

@@ -1,0 +1,110 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Administer okd
+  hosts: "{{ libvirt_host }}"
+  gather_facts: false
+  vars_files:
+  - "{{ playbook_dir }}/../defaults/main.yml"
+  - "{{ playbook_dir }}/../vars/main.yml"
+  pre_tasks:
+  - name: Install/configure prerequisites
+    tags:
+    - install_prerequisites
+    - never
+    import_role:
+      name: install_prerequisites
+  tasks:
+  - name: Create libvirt network
+    virt_net:
+      command: define
+      autostart: yes
+      name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+      xml: "{{ lookup('template', playbook_dir + '/../templates/libvirt-network.xml.j2') }}"
+
+  - name: Start libvirt network
+    virt_net:
+      autostart: yes
+      state: active
+      name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+
+  - name: Create ssh directory
+    file:
+      state: directory
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/.ssh"
+
+  - name: Generate ssh keypair
+    openssh_keypair:
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/.ssh/{{ cluster_name }}"
+      mode: 0400
+    register: ssh_key
+
+  - name: Create cluster directory
+    file:
+      state: directory
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}"
+
+  - name: Create utility ignition file
+    template:
+      src: "{{ playbook_dir }}/../templates/utility-ignition.ign.j2"
+      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ utility_vms[0].name }}.ign"
+      setype: svirt_home_t
+
+  - name: Check existing disks
+    stat:
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
+    loop: "{{ utility_vms }}"
+    register: disk_stats
+
+  - name: Clone base os disks
+    copy:
+      src: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2"
+      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
+    # All disk_stats results that don't exist
+    loop: "{{ disk_stats.results
+            | selectattr('stat.exists', 'equalto', false)
+            | map(attribute='item')
+            | list }}"
+
+  - name: Resize base disk
+    command: "qemu-img
+              resize
+              {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
+              {{ item.disk_size }}"
+    register: disk_resize
+    changed_when: "'Image resized' in disk_resize.stdout"
+    failed_when: disk_resize.rc != 0
+    # All disk_stats results that don't exist
+    loop: "{{ disk_stats.results
+            | selectattr('stat.exists', 'equalto', false)
+            | map(attribute='item')
+            | list }}"
+
+# This doesn't work for some reason
+#  - name: Create hosts
+#    virt:
+#      command: define
+#      xml: "{{ lookup('template', playbook_dir + '/../templates/libvirt-vm.xml.j2') }}"
+#    loop: "{{ utility_vms }}"
+#
+#  - name: Start vms
+#    virt:
+#      state: running
+#      name: "{{ item.name }}"
+#    loop: "{{ utility_vms }}"
+
+  # TODO: Do this with virt module
+  - name: Create hosts
+    command:
+      cmd: "virt-install
+            --connect qemu:///system
+            -n {{ item.name }}
+            --memory {{ item.memory }}
+            --vcpus {{ item.cpus }}
+            --import
+            --os-variant=fedora{{ fedora_version }}
+            --disk {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
+            --network network={{ cluster_name }}.{{ network.domain_suffix }},model=virtio,mac={{ item.mac }}
+            --graphics=none
+            --qemu-commandline=\"-fw_cfg name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.ign\"
+            --noautoconsole"
+    loop: "{{ utility_vms }}"
