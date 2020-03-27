@@ -36,6 +36,45 @@
         "group": {
           "name": "core"
         }
+      },
+      {
+        "path": "/home/core/coredns/Corefile",
+        "contents": {
+          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/Corefile.j2') | urlencode }}"
+        },
+        "mode": 438,
+        "user": {
+          "name": "core"
+        },
+        "group": {
+          "name": "core"
+        }
+      },
+      {
+        "path": "/home/core/coredns/{{ network.domain_suffix }}.db",
+        "contents": {
+          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/coredns.db.j2') | urlencode }}"
+        },
+        "mode": 438,
+        "user": {
+          "name": "core"
+        },
+        "group": {
+          "name": "core"
+        }
+      },
+      {
+        "path": "/proc/sys/net/ipv4/ip_unprivileged_port_start",
+        "contents": {
+          "source": "data:,53"
+        },
+        "mode": 420,
+        "user": {
+          "name": "root"
+        },
+        "group": {
+          "name": "root"
+        }
       }
     ]
   },
@@ -45,6 +84,11 @@
         "name": "haproxy.service",
         "enabled": true,
         "contents": "{{ lookup('file', playbook_dir + '/../files/haproxy.service') | replace('\n', '\\n') }}"
+      },
+      {
+        "name": "coredns.service",
+        "enabled": true,
+        "contents": "{{ lookup('file', playbook_dir + '/../files/coredns.service') | replace('\n', '\\n') }}"
       }
     ]
   }

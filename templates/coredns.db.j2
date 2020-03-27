@@ -1,0 +1,16 @@
+{{ network.domain_suffix }}. IN  SOA {{ utility_vms[0].name }}. admin.{{ network.domain_suffix }}. 2020032619 7200 3600 1209600 3600
+{% for vm in utility_vms + bootstrap_vms + master_vms + worker_vms %}
+{{ vm.name }}. IN A {{ vm.ip }}
+{% endfor %}
+
+{% for vm in master_vms %}
+etcd-{{ loop.index }}.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ vm.ip }}
+{% endfor %}
+
+api.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ utility_vms[0].ip }}
+api-int.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ utility_vms[0].ip }}
+*.apps.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ utility_vms[0].ip }}
+
+_etcd-server-ssl._tcp.{{ cluster_name }}.{{ network.domain_suffix }}. IN SRV 2380 0 10 etcd-0.{{ cluster_name }}.{{ network.domain_suffix }}.
+_etcd-server-ssl._tcp.{{ cluster_name }}.{{ network.domain_suffix }}. IN SRV 2380 0 10 etcd-1.{{ cluster_name }}.{{ network.domain_suffix }}.
+_etcd-server-ssl._tcp.{{ cluster_name }}.{{ network.domain_suffix }}. IN SRV 2380 0 10 etcd-2.{{ cluster_name }}.{{ network.domain_suffix }}.

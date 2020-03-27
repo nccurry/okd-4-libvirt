@@ -1,0 +1,11 @@
+.:53 {
+    forward . {{ network.upstream_dns_1 }} {{ network.upstream_dns_2 }}
+    log
+    errors
+}
+
+{{ network.domain_suffix }}:53 {
+    file /root/{{ network.domain_suffix }}.db
+    log
+    errors
+}
