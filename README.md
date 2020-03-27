@@ -27,5 +27,5 @@ virsh --connect qemu:///system console <name>
 * https://www.redhat.com/sysadmin/podman-shareable-systemd-services
 * https://cbonte.github.io/haproxy-dconv/2.2/configuration.html
 * https://www.rapidtables.com/convert/number/octal-to-decimal.html
-
+* https://libvirt.org/formatnetwork.html
 

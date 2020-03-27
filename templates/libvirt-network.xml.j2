@@ -12,7 +12,7 @@
   </dns>
   <bridge name='{{ network.bridge_name }}' stp='on' delay='0'/>
   <mac address='{{ network.mac }}'/>
-  <domain name='{{ cluster_name }}-{{ network.domain_suffix }}' localOnly='no'/>
+  <domain name='{{ network.domain_suffix }}' localOnly='no'/>
   <ip address='{{ network.gateway }}' netmask='{{ network.netmask }}'>
     <dhcp>
       <range start='{{ network.dhcp_start }}' end='{{ network.dhcp_end }}'/>

@@ -4,10 +4,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
+# Must run as root due to https://github.com/coreos/fedora-coreos-tracker/issues/437
+#User=core
+#Group=core
 Restart=on-failure
 ExecStartPre=/usr/bin/rm -f /%t/%n-pid /%t/%n-cid
-ExecStart=/usr/bin/podman run --conmon-pidfile /%t/%n-pid --cidfile /%t/%n-cid -d -p 53:53 -v /home/core/coredns/:/root/:Z coredns/coredns:latest -conf /root/Corefile
-ExecStop=/usr/bin/podman rm -f --cidfile %t/%n-cid
+ExecStart=/usr/bin/podman run --conmon-pidfile /%t/%n-pid --cidfile /%t/%n-cid -d -p 53:53/udp -v /home/core/coredns/:/root/:Z coredns/coredns:latest -conf /root/Corefile
+ExecStop=/usr/bin/podman rm -f --cidfile /%t/%n-cid
 KillMode=none
 Type=forking
 PIDFile=/%t/%n-pid
