@@ -1,10 +1,15 @@
 # OKD 4 on Libvirt
 
-## Pulling latest OKD
+## Prerequisites
 
-https://origin-release.svc.ci.openshift.org/
+### Get pull secret
 
-```oc adm release extract --tools registry.svc.ci.openshift.org/origin/release:4.4```
+https://cloud.redhat.com/openshift/install/metal/user-provisioned
+pull_secret.txt
+
+### Install prerequisites
+
+./playbooks/main.yml -t install_prerequisites -v 
 
 ## Miscellaneous
 

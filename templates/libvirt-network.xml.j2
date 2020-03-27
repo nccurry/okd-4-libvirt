@@ -16,7 +16,7 @@
   <ip address='{{ network.gateway }}' netmask='{{ network.netmask }}'>
     <dhcp>
       <range start='{{ network.dhcp_start }}' end='{{ network.dhcp_end }}'/>
-      {% for vm in utility_vms %}
+      {% for vm in utility_vms + bootstrap_vms + master_vms + worker_vms %}
       <host mac='{{ vm.mac }}' name='{{ vm.name }}' ip='{{ vm.ip }}'/>
       {% endfor %}
     </dhcp>

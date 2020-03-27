@@ -1,0 +1,63 @@
+- name: Create cluster directory
+  file:
+    state: directory
+    path: "{{ libvirt_domain_path }}/{{ cluster_name }}"
+
+# In order to facilitate idempotency we check for files that exist along the way
+- name: Check ignition file status
+  stat:
+    path: "{{ item }}"
+  loop:
+  - "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-ingress-02-config.yml"
+  - "{{ libvirt_domain_path }}/{{ cluster_name }}/auth/kubeadmin-password"
+  register: file_status
+
+- name: Create install-config.yaml
+  template:
+    src: install-config.yaml.j2
+    dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/install-config.yaml"
+  when: not (file_status.results[0].stat.exists or file_status.results[1].stat.exists)
+
+- block:
+  - name: Generate installation manifests
+    command: 
+      cmd: "okd-install
+            create
+            manifests
+            --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
+      creates: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-scheduler-02-config.yml"
+
+  - name: Set masters as scheduleable
+    lineinfile:
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-scheduler-02-config.yml"
+      regexp: '^\s{2}mastersSchedulable:\s.*$'
+      line: "  mastersSchedulable: true"
+
+  - name: Set ingress controller replica count
+    lineinfile:
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-ingress-02-config.yml"
+      insertafter: '^\s{2}domain:\s.*$'
+      line: "  replicas: 3"
+  when: not file_status.results[1].stat.exists
+
+- name: Generate okd ignition files
+  command: 
+    cmd: "okd-install 
+          create
+          ignition-configs
+          --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
+    creates: "{{ libvirt_domain_path }}/{{ cluster_name }}/bootstrap.ign"
+
+- name: Create utility ignition file
+  template:
+    src: utility-ignition.ign.j2
+    dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/utility.ign"
+    setype: svirt_home_t
+
+# TODO: Do this better
+- name: Properly set file permissions
+  shell:
+    cmd: "{{ item }}"
+  loop:
+  - chcon -t svirt_home_t ~/documents/vms/okd/*.ign
+  - chmod 666 ~/documents/vms/okd/*.ign

@@ -1,5 +1,8 @@
 # These parameters will not change very often
 
+# Location where pull secret is stored
+pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"
+
 # Used for kvm os
 fedora_version: 31
 
@@ -29,7 +32,7 @@ network:
   broadcast: 10.0.10.255
   gateway: 10.0.10.1
   dhcp_start: 10.0.10.10
-  dhcp_end: 10.0.10.20
+  dhcp_end: 10.0.10.50
   upstream_dns_1: 1.1.1.1
   upstream_dns_2: 1.0.0.1
 
@@ -37,6 +40,7 @@ network:
 # This is an array to match the other cluster host data structures
 utility_vms:
 - name: "{{ cluster_name }}-utility.{{ network.domain_suffix }}"
+  type: utility
   ip: 10.0.10.10
   mac: 52:54:00:7b:0a:15
   memory: 2048
@@ -47,7 +51,8 @@ utility_vms:
 # This is an array to match the other cluster host data structures
 bootstrap_vms:
 - name: "{{ cluster_name }}-bootstrap.{{ network.domain_suffix }}"
-  ip: 10.0.10.13
+  type: bootstrap
+  ip: 10.0.10.11
   mac: 52:54:00:dc:eb:e1
   memory: 16932
   cpus: 4
@@ -55,27 +60,31 @@ bootstrap_vms:
 
 master_vms:
 - name: "{{ cluster_name }}-master-0.{{ network.domain_suffix }}"
-  ip: 10.0.10.11
+  type: master
+  ip: 10.0.10.20
   mac: 52:54:00:4a:c3:b9
   memory: 16932
   cpus: 4
   disk_size: 20G
 - name: "{{ cluster_name }}-master-1.{{ network.domain_suffix }}"
-  ip: 10.0.10.12
+  type: master
+  ip: 10.0.10.21
   mac: 52:54:00:42:3a:1d
   memory: 16932
   cpus: 4
   disk_size: 20G
 - name: "{{ cluster_name }}-master-2.{{ network.domain_suffix }}"
-  ip: 10.0.10.13
+  type: master
+  ip: 10.0.10.22
   mac: 52:54:00:9d:3c:2e
   memory: 16932
   cpus: 4
   disk_size: 20G
 
 worker_vms: []
-#- name: "{{ cluster_name }}-worker.{{ network.domain_suffix }}"
-#  ip: 10.0.10.12
+#- name: "{{ cluster_name }}-worker-0.{{ network.domain_suffix }}"
+#  type: worker
+#  ip: 10.0.10.30
 #  mac: 52:54:00:72:1c:71
 #  memory: 16932
 #  cpus: 4

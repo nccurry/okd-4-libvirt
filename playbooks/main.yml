@@ -38,22 +38,15 @@
       mode: 0400
     register: ssh_key
 
-  - name: Create cluster directory
-    file:
-      state: directory
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}"
-
-  - name: Create utility ignition file
-    template:
-      src: "{{ playbook_dir }}/../templates/utility-ignition.ign.j2"
-      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ utility_vms[0].name }}.ign"
-      setype: svirt_home_t
+  - name: Generate ignition files
+    import_role:
+      name: generate_ignition_files
 
   - name: Check existing disks
     stat:
       path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    loop: "{{ utility_vms }}"
     register: disk_stats
+    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
 
   - name: Clone base os disks
     copy:
@@ -105,6 +98,6 @@
             --disk {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
             --network network={{ cluster_name }}.{{ network.domain_suffix }},model=virtio,mac={{ item.mac }}
             --graphics=none
-            --qemu-commandline=\"-fw_cfg name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.ign\"
+            --qemu-commandline=\"-fw_cfg name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.type }}.ign\"
             --noautoconsole"
-    loop: "{{ utility_vms }}"
+    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
