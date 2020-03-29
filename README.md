@@ -27,6 +27,8 @@ virsh --connect qemu:///system console <name>
 
 ### Useful Documentation
 
+* https://builds.coreos.fedoraproject.org/browser
+* https://origin-release.svc.ci.openshift.org/
 * https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/
 * https://github.com/coreos/toolbox#toolbox---bring-your-tools-with-you
 * https://www.redhat.com/sysadmin/podman-shareable-systemd-services

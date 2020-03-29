@@ -4,7 +4,7 @@
 {% endfor %}
 
 {% for vm in master_vms %}
-etcd-{{ loop.index }}.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ vm.ip }}
+etcd-{{ loop.index0 }}.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ vm.ip }}
 {% endfor %}
 
 api.{{ cluster_name }}.{{ network.domain_suffix }}. IN A {{ utility_vms[0].ip }}

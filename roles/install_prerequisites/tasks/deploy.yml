@@ -13,8 +13,10 @@
   - "@Virtualization"
   # Needed for virt ansible module
   - python3-libvirt
-  # Needed to unzip xz archives
+  # Needed to unarchive xz files
   - xz
+  # Needed to unarchife gz files
+  - gzip
 
 - name: Start / enable libvirtd
   become: true
@@ -23,17 +25,43 @@
     enabled: true
     state: started
 
-- name: Download fcos qcow2 image
-  get_url:
-    url: "{{ fcos_qcow2_url }}"
-    dest: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
-  register: get_fcos
+- name: Check if fcos qcow2 is already present
+  stat:
+    path: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
+  register: fcos_stat
 
-- name: Unarchive fcos image
-  command:
-    cmd: "unxz fcos-{{ fcos_build }}.qcow2.xz"
-    chdir: "{{ libvirt_domain_path }}/images"
-  when: get_fcos.changed
+- block:
+  - name: Download fcos qcow2 image
+    get_url:
+      url: "{{ fcos_qcow2_url }}"
+      dest: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
+    register: get_fcos
+
+  - name: Unarchive fcos image
+    command:
+      cmd: "unxz fcos-{{ fcos_build }}.qcow2.xz"
+      chdir: "{{ libvirt_domain_path }}/images"
+    when: get_fcos.changed
+  when: not fcos_stat.stat.exists
+
+- name: Check if rhcos qcow2 is already present
+  stat:
+    path: "{{ libvirt_domain_path }}/images/rhcos-{{ rhcos_build }}.qcow2"
+  register: rhcos_stat
+
+- block:
+  - name: Download rhcos qcow2 image
+    get_url:
+      url: "{{ rhcos_qcow2_url }}"
+      dest: "{{ libvirt_domain_path }}/images/rhcos-{{ rhcos_build }}.qcow2.gz"
+    register: get_rhcos
+
+  - name: Unarchive rhcos image
+    command:
+      cmd: "gunzip rhcos-{{ rhcos_build }}.qcow2.gz"
+      chdir: "{{ libvirt_domain_path }}/images"
+    when: get_rhcos.changed
+  when: install_type == 'openshift' and not rhcos_stat.stat.exists
 
 - name: Check if oc is already installed
   stat:
@@ -73,38 +101,45 @@
       src: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
       dest: "{{ lookup('env', 'HOME') }}/bin/oc"
 
-- name: Check if okd install binary is already present
+- name: Check if openshift-install is already installed
   stat:
-    path: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
-  register: okd_stat
+    path: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
+  register: ocp_stat
 
-- name: Extract and install okd-install
-  when: not okd_stat.stat.exists
+- name: Download and install openshift-install
+  when: not ocp_stat.stat.exists
   block:
-  - name: Extract okd-install cli
-    command:
-      cmd: "{{ lookup('env', 'HOME') }}/bin/oc
-            adm
-            release
-            extract
-            --command=openshift-install
-            {{ okd_url }}"
-      chdir: /tmp
+  - name: Download openshift-install archive
+    get_url:
+      url: "{{ ocp_url }}"
+      dest: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
 
-  - name: Move okd install binary to ~/bin
+  - name: Unarchive oc cli tools
+    unarchive:
+      src: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
+      dest: /tmp
+
+  - name: Ensure binary directory exists
+    file:
+      state: directory
+      path: "{{ lookup('env', 'HOME') }}/bin"
+
+  - name: Move openshift-install cli to binary directory
     copy:
       src: /tmp/openshift-install
-      dest: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
-      mode: 0774
+      dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
       owner: "{{ lookup('env', 'USER') }}"
       group: "{{ lookup('env', 'USER') }}"
+      mode: 0774
 
-  - name: Create symlink to main binary
+  - name: Create symlink to openshift-install cli
     file:
       state: link
       force: yes
-      src: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
-      dest: "{{ lookup('env', 'HOME') }}/bin/okd-install"
+      src: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
+      dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install"
+
+# TODO: Create logic to download okd-install
 
 - name: Create libvirt group
   become: true
@@ -115,4 +150,5 @@
   become: true
   user:
     name: "{{ lookup('env', 'USER') }}"
-    group: libvirt
+    groups: libvirt
+    append: yes

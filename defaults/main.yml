@@ -1,25 +1,33 @@
 # These parameters will not change very often
 
+# Installation executable
+install_executable: "{{ (install_type == 'openshift') | ternary('openshift-install', 'okd-install') }}"
+
 # Location where pull secret is stored
 pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"
 
-# Used for kvm os
+# Used for KVM virtual machine metadata
 fedora_version: 31
 
-# FCOS urls
+# URL to download Fedora CoreOS
 fcos_qcow2_url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_build }}/x86_64/fedora-coreos-{{ fcos_build }}-qemu.x86_64.qcow2.xz"
 
-# OC url
+# URL to download Red Hat CoreOS
+rhcos_qcow2_url: "http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ rhcos_build[:3] }}/{{ rhcos_build }}/rhcos-{{ rhcos_build }}-x86_64-qemu.x86_64.qcow2.gz"
+
+# URL to download OC cli
 oc_url: "https://mirror.openshift.com/pub/openshift-v4/clients/oc/{{ oc_release }}/linux/oc.tar.gz"
 
-# OKD install url
+# URL to extract OKD installation binary
 okd_url: "registry.svc.ci.openshift.org/origin/release:{{ okd_release }}"
 
-# Host running libvirt
-# The playbooks get run on this host
+# URL to download OpenShift installation binary
+ocp_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_release }}/openshift-install-linux.tar.gz"
+
+# Host running Libvirt. The ansible playbooks get run on this host
 libvirt_host: localhost
 
-# Path where virtual machines will be created
+# Path on libvirt_host where virtual machines will be created
 libvirt_domain_path: "{{ lookup('env', 'HOME') }}/documents/vms"
 
 # Libvirt network information
@@ -35,6 +43,8 @@ network:
   dhcp_end: 10.0.10.50
   upstream_dns_1: 1.1.1.1
   upstream_dns_2: 1.0.0.1
+
+# OKD/OpenShift cluster hosts
 
 # There should only ever be one utility server.
 # This is an array to match the other cluster host data structures

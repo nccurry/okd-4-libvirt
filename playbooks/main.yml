@@ -42,23 +42,23 @@
     import_role:
       name: generate_ignition_files
 
-  - name: Check existing disks
+  - name: Check existing utility disk
     stat:
       path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    register: disk_stats
-    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
+    register: utility_disk_stats
+    loop: "{{ utility_vms }}"
 
-  - name: Clone base os disks
+  - name: Clone utility os disks
     copy:
       src: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2"
       dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
     # All disk_stats results that don't exist
-    loop: "{{ disk_stats.results
+    loop: "{{ utility_disk_stats.results
             | selectattr('stat.exists', 'equalto', false)
             | map(attribute='item')
             | list }}"
 
-  - name: Resize base disk
+  - name: Resize base utility disks
     command: "qemu-img
               resize
               {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
@@ -67,7 +67,40 @@
     changed_when: "'Image resized' in disk_resize.stdout"
     failed_when: disk_resize.rc != 0
     # All disk_stats results that don't exist
-    loop: "{{ disk_stats.results
+    loop: "{{ utility_disk_stats.results
+            | selectattr('stat.exists', 'equalto', false)
+            | map(attribute='item')
+            | list }}"
+
+  - name: Check existing cluster disks
+    stat:
+      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
+    register: cluster_disk_stats
+    loop: "{{ bootstrap_vms + master_vms + worker_vms }}"
+
+  - name: Clone cluster os disks
+    vars:
+      disk_type: "{{ (install_type == 'openshift')
+                    | ternary('rhcos-' + rhcos_build + '.qcow2', 'fcos-' + fcos_build + '.qcow2') }}"
+    copy:
+      src: "{{ libvirt_domain_path }}/images/{{ disk_type }}"
+      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
+    # All disk_stats results that don't exist
+    loop: "{{ cluster_disk_stats.results
+            | selectattr('stat.exists', 'equalto', false)
+            | map(attribute='item')
+            | list }}"
+
+  - name: Resize base cluster disks
+    command: "qemu-img
+              resize
+              {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
+              {{ item.disk_size }}"
+    register: disk_resize
+    changed_when: "'Image resized' in disk_resize.stdout"
+    failed_when: disk_resize.rc != 0
+    # All disk_stats results that don't exist
+    loop: "{{ cluster_disk_stats.results
             | selectattr('stat.exists', 'equalto', false)
             | map(attribute='item')
             | list }}"

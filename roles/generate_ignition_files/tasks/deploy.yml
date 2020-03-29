@@ -21,7 +21,7 @@
 - block:
   - name: Generate installation manifests
     command: 
-      cmd: "okd-install
+      cmd: "{{ install_executable }}
             create
             manifests
             --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
@@ -42,7 +42,7 @@
 
 - name: Generate okd ignition files
   command: 
-    cmd: "okd-install 
+    cmd: "{{ install_executable }}
           create
           ignition-configs
           --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
@@ -54,10 +54,10 @@
     dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/utility.ign"
     setype: svirt_home_t
 
-# TODO: Do this better
+# TODO: Do this with the file module
 - name: Properly set file permissions
   shell:
     cmd: "{{ item }}"
   loop:
-  - chcon -t svirt_home_t ~/documents/vms/okd/*.ign
-  - chmod 666 ~/documents/vms/okd/*.ign
+  - "chcon -t svirt_home_t {{ libvirt_domain_path }}/{{ cluster_name }}/*.ign"
+  - "chmod 666 {{ libvirt_domain_path }}/{{ cluster_name }}/*.ign"
