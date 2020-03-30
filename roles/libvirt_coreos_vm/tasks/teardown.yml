@@ -1,0 +1,30 @@
+- name: Shutdown domain
+  virt:
+    state: shutdown
+    name: "{{ vm_name }}"
+  register: shutdown_domain
+  failed_when: false
+
+- name: Destroy domain
+  virt:
+    state: destroyed
+    name: "{{ vm_name }}"
+  register: destroy_domain
+  failed_when: false
+
+- name: Undefine domain
+  virt:
+    name: "{{ vm_name }}"
+    command: undefine
+  failed_when: false
+
+- name: Remove files
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+  - "{{ libvirt_domain_path }}/{{ vm_name }}.ign"
+  - "{{ libvirt_domain_path }}/{{ vm_name }}.qcow2"
+  - "{{ libvirt_domain_path }}/{{ image_name }}.xz"
+  - "{{ libvirt_domain_path }}/{{ image_name }}.gz"
+#  - "{{ libvirt_domain_path }}/{{ image_name }}"

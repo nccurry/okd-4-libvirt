@@ -1,0 +1,28 @@
+- name: Install prerequisite packages for libvirt
+  become: true
+  dnf:
+    name: "{{ item }}"
+  loop:
+  # Needed for libvirt
+  - "@Virtualization"
+  # Needed for virt ansible module
+  - python3-libvirt
+
+- name: Start / enable libvirtd
+  become: true
+  systemd:
+    name: libvirtd
+    enabled: true
+    state: started
+
+- name: Create libvirt group
+  become: true
+  group:
+    name: libvirt
+
+- name: Add user to libvirt group
+  become: true
+  user:
+    name: "{{ lookup('env', 'USER') }}"
+    groups: libvirt
+    append: yes

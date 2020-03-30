@@ -134,3 +134,18 @@
             --qemu-commandline=\"-fw_cfg name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.type }}.ign\"
             --noautoconsole"
     loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
+
+  - name: Create entries in /etc/hosts
+    become: true
+    blockinfile:
+      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+      path: /etc/hosts
+      block: |
+        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}

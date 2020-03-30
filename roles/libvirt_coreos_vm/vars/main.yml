@@ -1,0 +1,10 @@
+# Template image name
+image_name: "{{ (coreos_type == 'fedora')
+                | ternary('fcos-' + fcos_build + '.qcow2',
+                          'rhcos-' + rhcos_build + '.qcow2') }}"
+
+# URL to download Fedora CoreOS
+fcos_qcow2_url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_build }}/x86_64/fedora-coreos-{{ fcos_build }}-qemu.x86_64.qcow2.xz"
+
+# URL to download Red Hat CoreOS
+rhcos_qcow2_url: "http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ rhcos_build[:3] }}/{{ rhcos_build }}/rhcos-{{ rhcos_build }}-x86_64-qemu.x86_64.qcow2.gz"

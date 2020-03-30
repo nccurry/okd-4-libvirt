@@ -1,0 +1,91 @@
+# Type of CoreOS host to deploy - redhat or fedora
+coreos_type: fedora
+
+# Path on libvirt host to keep domains (virtual machines)
+libvirt_domain_path: "{{ lookup('env', 'HOME') }}/documents/vms"
+
+
+#
+# Ignition configuration
+#
+
+
+# Ignition path. Either this or ignition_config must be specified
+ignition_path: ''
+
+# Ignition configuration. Either this or ignition_path must be specified
+# https://github.com/coreos/ignition/blob/master/doc/configuration-v3_0.md
+ignition_config: {}
+#  ignition:
+#    version: 3.0.0
+#    config:
+#    timeouts:
+#    security:
+#  storage:
+#    disks: []
+#    raid: []
+#    filesystems: []
+#    files: []
+#    directories: []
+#    links: []
+#  systemd:
+#    units: []
+#  passwd:
+#    users: []
+#    groups: []
+
+
+#
+# Virtual machine configuration
+#
+
+
+# Virtual machine name
+vm_name: coreos
+
+# Virtual machine MAC address
+# Generate a new one with: $(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+vm_mac: 52:54:00:7b:0a:16
+
+# Virtual machine cpu cores
+vm_cpus: 2
+
+# Virtual machine memory in MiB
+vm_memory: 2048
+
+# Virtual machine disk size in GB
+# Must be an integer followed by G (i.e. 20G)
+# Must be larger than original template image size (~8G)
+vm_disk_size: 20G
+
+# Network to deploy virtual machine into
+vm_network_name: default
+
+# Network bridge to deploy virtual machine interface on
+vm_network_bridge: virbr0
+
+# OS variant of domain
+vm_os_variant: fedora31
+
+#
+# Fedora CoreOS information
+#
+
+
+# Major of Fedora. Used for Libvirt guest profile
+fedora_version: 31
+
+# Build number and stream of Fedora CoreOS
+# https://builds.coreos.fedoraproject.org/browser
+fcos_stream: stable
+fcos_build: 31.20200310.3.0
+
+
+#
+# Red Hat CoreOS information
+#
+
+
+# Red Hat CoreOS build number. Must be of the form X.Y.Z (i.e. 4.3.8) and not latest
+# http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
+rhcos_build: 4.3.8

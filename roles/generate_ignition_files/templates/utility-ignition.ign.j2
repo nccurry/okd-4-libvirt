@@ -64,9 +64,9 @@
         }
       },
       {
-        "path": "/proc/sys/net/ipv4/ip_unprivileged_port_start",
+        "path": "/etc/sysctl.d/11-lowports.conf",
         "contents": {
-          "source": "data:,53"
+          "source": "data:,net.ipv4.ip_unprivileged_port_start=53"
         },
         "mode": 420,
         "user": {

@@ -1,0 +1,55 @@
+- name: Download packages needed to unarchive image
+  become: true
+  dnf:
+    name: "{{ item }}"
+  loop:
+  # Needed to unarchive xz files
+  - xz
+  # Needed to unarchife gz files
+  - gzip
+
+- name: Create domain directory
+  file:
+    state: directory
+    path: "{{ libvirt_domain_path }}"
+
+- name: Check template image
+  stat:
+    path: "{{ libvirt_domain_path }}/{{ image_name }}"
+  register: image_stat
+
+- block:
+  - name: Download fcos qcow2 image
+    get_url:
+      url: "{{ fcos_qcow2_url }}"
+      dest: "{{ libvirt_domain_path }}/{{ image_name }}.xz"
+
+  - name: Unarchive fcos image
+    command:
+      cmd: "unxz {{ image_name }}.xz"
+      chdir: "{{ libvirt_domain_path }}"
+  when:
+  - coreos_type == 'fedora'
+  - not image_stat.stat.exists
+
+- block:
+  - name: Download rhcos qcow2 image
+    get_url:
+      url: "{{ rhcos_qcow2_url }}"
+      dest: "{{ libvirt_domain_path }}/{{ image_name }}.gz"
+
+  - name: Unarchive rhcos image
+    command:
+      cmd: "gunzip {{ image_name }}.gz"
+      chdir: "{{ libvirt_domain_path }}"
+  when:
+  - coreos_type == 'redhat'
+  - not image_stat.stat.exists
+
+- name: Remove unneeded files
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+  - "{{ libvirt_domain_path }}/{{ image_name }}.xz"
+  - "{{ libvirt_domain_path }}/{{ image_name }}.gz"
