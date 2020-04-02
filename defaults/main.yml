@@ -8,19 +8,19 @@ cluster_name: ocp
 # https://mirror.openshift.com/pub/openshift-v4/clients/oc
 oc_release: 4.4
 
-# OpenShift release number. Used to extract installation binary
+# OpenShift release number. Used to extract installation binary when installing OpenShift
 # https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
-ocp_release: 4.3.8
+ocp_release: 4.3.9
 
-# OKD release number. Used to extract installation binary
+# OKD release number. Used to extract installation binary when installing OKD
 # https://origin-release.svc.ci.openshift.org/
 okd_release: 4.4.0-0.okd-2020-03-27-024151
 
 # Location where pull secret is stored
 pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"
 
-# Place to generate ignition files
-ignition_path: "{{ lookup('env', 'HOME') }}/{{ install_type }}/{{ cluster_name }}"
+# Directory to generate ignition files
+ignition_directory: "{{ lookup('env', 'HOME') }}/{{ install_type }}/{{ cluster_name }}"
 
 # Host running Libvirt. The ansible playbooks get run on this host
 libvirt_host: localhost
@@ -95,4 +95,5 @@ worker_vms: []
 #  cpus: 4
 #  disk_size: 20G
 
+# Array containing all cluster vms. You shouldn't need to modify this
 cluster_vms: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"

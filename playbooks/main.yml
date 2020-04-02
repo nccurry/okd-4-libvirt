@@ -6,9 +6,7 @@
   vars_files:
   - "{{ playbook_dir }}/../defaults/main.yml"
   tasks:
-  - name: Install/configure prerequisites
-    tags:
-    - install_cli_tools
+  - name: Install cli tools
     import_role:
       name: install_cli_tools
 
@@ -49,47 +47,38 @@
       state: active
       name: "{{ cluster_name }}.{{ network.domain_suffix }}"
 
-  - name: Create ssh directory
-    file:
-      state: directory
-      path: "{{ lookup('env', 'HOME') }}/.ssh"
-
-  - name: Generate ssh keypair
-    openssh_keypair:
-      path: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
-      mode: 0400
-    register: ssh_key
-
   - name: Generate ignition files
     import_role:
       name: generate_ignition_files
 
   - name: Deploy virtual machine
     vars:
-      coreos_type: "{{ install_type == 'okd' | ternary('fedora', 'redhat') }}"
-      ignition_path: "{{ ignition_path }}/{{ item.type }}.ign"
-      vm_name: "{{ item.name }}"
-      vm_mac: "{{ item.mac }}"
-      vm_cpus: "{{ item.cpus }}"
-      vm_memory: "{{ item.memory }}"
-      vm_disk_size: "{{ item.disk_size }}"
+      coreos_type: "{{ (install_type == 'okd') | ternary('fedora', 'redhat') }}"
+      ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
+      vm_name: "{{ vm.name }}"
+      vm_mac: "{{ vm.mac }}"
+      vm_cpus: "{{ vm.cpus }}"
+      vm_memory: "{{ vm.memory }}"
+      vm_disk_size: "{{ vm.disk_size }}"
       vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
       vm_network_bridge: "{{ network.bridge_name }}"
-    import_role:
+    include_role:
       name: libvirt_coreos_vm
-    loop: "{{ cluster_vms }}"
+    loop: "{{ utility_vms }}"
+    loop_control:
+      loop_var: vm
 
-  - name: Create entries in /etc/hosts
-    become: true
-    blockinfile:
-      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
-      path: /etc/hosts
-      block: |
-        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
+#  - name: Create entries in /etc/hosts
+#    become: true
+#    blockinfile:
+#      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+#      path: /etc/hosts
+#      block: |
+#        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
+#        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}

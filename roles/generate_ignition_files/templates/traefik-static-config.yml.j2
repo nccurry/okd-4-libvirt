@@ -1,0 +1,22 @@
+# Traefik static configuration
+# https://docs.traefik.io/getting-started/configuration-overview/#the-static-configuration
+
+entryPoints:
+  api:
+    address: :6443
+
+  machineconfig:
+    address: :22623
+
+  ingresshttp:
+    address: :80
+
+  ingresshttps:
+    address: :443
+
+providers:
+  file:
+    filename: /etc/traefik/cluster.yml
+
+api:
+  insecure: true

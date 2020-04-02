@@ -25,22 +25,9 @@
   "storage": {
     "files": [
       {
-        "path": "/home/core/haproxy/haproxy.cfg",
-        "contents": {
-          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/haproxy.cfg.j2') | urlencode }}"
-        },
-        "mode": 438,
-        "user": {
-          "name": "core"
-        },
-        "group": {
-          "name": "core"
-        }
-      },
-      {
         "path": "/home/core/coredns/Corefile",
         "contents": {
-          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/Corefile.j2') | urlencode }}"
+          "source": "data:,{{ lookup('template', 'coredns-corefile.j2') | urlencode }}"
         },
         "mode": 438,
         "user": {
@@ -53,7 +40,33 @@
       {
         "path": "/home/core/coredns/{{ network.domain_suffix }}.db",
         "contents": {
-          "source": "data:,{{ lookup('template', playbook_dir + '/../templates/coredns.db.j2') | urlencode }}"
+          "source": "data:,{{ lookup('template', 'coredns-db.j2') | urlencode }}"
+        },
+        "mode": 438,
+        "user": {
+          "name": "core"
+        },
+        "group": {
+          "name": "core"
+        }
+      },
+      {
+        "path": "/home/core/traefik/cluster.yml",
+        "contents": {
+          "source": "data:,{{ lookup('template', 'traefik-provider.yml.j2') | urlencode }}"
+        },
+        "mode": 438,
+        "user": {
+          "name": "core"
+        },
+        "group": {
+          "name": "core"
+        }
+      },
+      {
+        "path": "/home/core/traefik/traefik.yml",
+        "contents": {
+          "source": "data:,{{ lookup('template', 'traefik-static-config.yml.j2') | urlencode }}"
         },
         "mode": 438,
         "user": {
@@ -81,14 +94,14 @@
   "systemd": {
     "units": [
       {
-        "name": "haproxy.service",
+        "name": "traefik.service",
         "enabled": true,
-        "contents": "{{ lookup('file', playbook_dir + '/../files/haproxy.service') | replace('\n', '\\n') }}"
+        "contents": "{{ lookup('file', 'traefik.service') | replace('\n', '\\n') }}"
       },
       {
         "name": "coredns.service",
         "enabled": true,
-        "contents": "{{ lookup('file', playbook_dir + '/../files/coredns.service') | replace('\n', '\\n') }}"
+        "contents": "{{ lookup('file', 'coredns.service') | replace('\n', '\\n') }}"
       }
     ]
   }

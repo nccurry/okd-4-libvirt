@@ -1,31 +1,16 @@
 #!/usr/bin/env ansible-playbook
 ---
-- name: Administer libvirt
+- name: Administer OpenShift / OKD
   hosts: localhost
   gather_facts: false
-  vars:
-    ignition_config:
-      ignition:
-        version: 3.0.0
-        config:
-        timeouts:
-        security:
-      storage:
-        disks: []
-        raid: []
-        filesystems: []
-        files:
-        - path: /home/core/test
-          conetnts:
-            source: "data:,test_content"
-        directories: []
-        links: []
-      systemd:
-        units: []
-      passwd:
-        users: []
-        groups: []
   tasks:
-  - name: Deploy vm
-    import_role:
-      name: libvirt_coreos_vm
+
+  - name: Deploy virtual machine
+    vars:
+      my_test_var: "{{ item.name }}"
+    include_role:
+      name: test_role
+    loop:
+    - name: one
+    - name: two
+    - name: three

@@ -1,5 +1,5 @@
 [Unit]
-Description=CoreDNS
+Description=Traefik
 After=network-online.target
 Wants=network-online.target
 
@@ -11,9 +11,13 @@ ExecStart=/usr/bin/podman \
             --conmon-pidfile /%t/%n-pid \
             --cidfile /%t/%n-cid \
             -d \
-            -p 53:53/udp \
-            -v /home/core/coredns/:/root/:Z coredns/coredns:latest \
-            -conf /root/Corefile
+            -p 6443:6443 \
+            -p 443:443 \
+            -p 80:80 \
+            -p 8080:8080 \
+            -v /home/core/traefik/traefik.yml:/etc/traefik/traefik.yml:Z \
+            -v /home/core/traefik/cluster.yml:/etc/traefik/cluster.yml:Z \
+            traefik:latest
 ExecStop=/usr/bin/podman rm -f --cidfile /%t/%n-cid
 KillMode=none
 Type=forking

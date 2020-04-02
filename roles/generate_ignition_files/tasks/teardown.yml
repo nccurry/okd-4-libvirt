@@ -1,13 +1,4 @@
-- name: Remove ignition files
+- name: Remove ignition directory
   file:
     state: absent
-    path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item }}"
-  loop:
-  - auth
-  - bootstrap.ign
-  - master.ign
-  - worker.ign
-  - manifests
-  - metadata.json
-  - .openshift_install.log
-  - .openshift_install_state.json
+    path: "{{ ignition_path }}"
