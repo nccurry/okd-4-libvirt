@@ -8,3 +8,9 @@ fcos_qcow2_url: "https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_st
 
 # URL to download Red Hat CoreOS
 rhcos_qcow2_url: "http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ rhcos_build[:3] }}/{{ rhcos_build }}/rhcos-{{ rhcos_build }}-x86_64-qemu.x86_64.qcow2.gz"
+
+# Libosinfo url for virtual machine metadata
+# Types can be listed with $(osinfo-query os)
+lib_os_info: "{{ (coreos_type == 'fedora')
+                | ternary('http://fedoraproject.org/fedora/' + fedora_version | string,
+                          'http://redhat.com/rhel/7.4' + redhat_version | string) }}"

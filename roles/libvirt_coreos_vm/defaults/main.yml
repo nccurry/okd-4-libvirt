@@ -4,12 +4,6 @@ coreos_type: fedora
 # Path on libvirt host to keep domains (virtual machines)
 libvirt_domain_path: "{{ lookup('env', 'HOME') }}/documents/vms"
 
-
-#
-# Ignition configuration
-#
-
-
 # Ignition path. Either this or ignition_config must be specified
 ignition_path: ''
 
@@ -33,12 +27,6 @@ ignition_config: {}
 #  passwd:
 #    users: []
 #    groups: []
-
-
-#
-# Virtual machine configuration
-#
-
 
 # Virtual machine name
 vm_name: coreos
@@ -64,15 +52,7 @@ vm_network_name: default
 # Network bridge to deploy virtual machine interface on
 vm_network_bridge: virbr0
 
-# OS variant of domain
-vm_os_variant: fedora31
-
-#
-# Fedora CoreOS information
-#
-
-
-# Major of Fedora. Used for Libvirt guest profile
+# Major version of Fedora. Used for Libvirt libosinfo metadata
 fedora_version: 31
 
 # Build number and stream of Fedora CoreOS
@@ -80,11 +60,8 @@ fedora_version: 31
 fcos_stream: stable
 fcos_build: 31.20200310.3.0
 
-
-#
-# Red Hat CoreOS information
-#
-
+# Major version of RHEL. Used for Libvirt libosinfo metadata
+redhat_version: 8.1
 
 # Red Hat CoreOS build number. Must be of the form X.Y.Z (i.e. 4.3.8) and not latest
 # http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/

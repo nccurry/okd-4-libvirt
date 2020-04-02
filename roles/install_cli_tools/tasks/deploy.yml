@@ -9,59 +9,10 @@
   dnf:
     name: "{{ item }}"
   loop:
-  # Needed for libvirt
-  - "@Virtualization"
-  # Needed for virt ansible module
-  - python3-libvirt
   # Needed to unarchive xz files
   - xz
   # Needed to unarchife gz files
   - gzip
-
-- name: Start / enable libvirtd
-  become: true
-  systemd:
-    name: libvirtd
-    enabled: true
-    state: started
-
-- name: Check if fcos qcow2 is already present
-  stat:
-    path: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
-  register: fcos_stat
-
-- block:
-  - name: Download fcos qcow2 image
-    get_url:
-      url: "{{ fcos_qcow2_url }}"
-      dest: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
-    register: get_fcos
-
-  - name: Unarchive fcos image
-    command:
-      cmd: "unxz fcos-{{ fcos_build }}.qcow2.xz"
-      chdir: "{{ libvirt_domain_path }}/images"
-    when: get_fcos.changed
-  when: not fcos_stat.stat.exists
-
-- name: Check if rhcos qcow2 is already present
-  stat:
-    path: "{{ libvirt_domain_path }}/images/rhcos-{{ rhcos_build }}.qcow2"
-  register: rhcos_stat
-
-- block:
-  - name: Download rhcos qcow2 image
-    get_url:
-      url: "{{ rhcos_qcow2_url }}"
-      dest: "{{ libvirt_domain_path }}/images/rhcos-{{ rhcos_build }}.qcow2.gz"
-    register: get_rhcos
-
-  - name: Unarchive rhcos image
-    command:
-      cmd: "gunzip rhcos-{{ rhcos_build }}.qcow2.gz"
-      chdir: "{{ libvirt_domain_path }}/images"
-    when: get_rhcos.changed
-  when: install_type == 'openshift' and not rhcos_stat.stat.exists
 
 - name: Check if oc is already installed
   stat:
@@ -141,14 +92,3 @@
 
 # TODO: Create logic to download okd-install
 
-- name: Create libvirt group
-  become: true
-  group:
-    name: libvirt
-
-- name: Add user to libvirt group
-  become: true
-  user:
-    name: "{{ lookup('env', 'USER') }}"
-    groups: libvirt
-    append: yes

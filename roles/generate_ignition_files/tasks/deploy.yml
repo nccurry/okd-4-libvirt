@@ -1,21 +1,21 @@
-- name: Create cluster directory
+- name: Create ignition directory
   file:
     state: directory
-    path: "{{ libvirt_domain_path }}/{{ cluster_name }}"
+    path: "{{ ignition_path }}"
 
 # In order to facilitate idempotency we check for files that exist along the way
 - name: Check ignition file status
   stat:
     path: "{{ item }}"
   loop:
-  - "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-ingress-02-config.yml"
-  - "{{ libvirt_domain_path }}/{{ cluster_name }}/auth/kubeadmin-password"
+  - "{{ ignition_path }}/manifests/cluster-ingress-02-config.yml"
+  - "{{ ignition_path }}/auth/kubeadmin-password"
   register: file_status
 
 - name: Create install-config.yaml
   template:
     src: install-config.yaml.j2
-    dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/install-config.yaml"
+    dest: "{{ ignition_path }}/install-config.yaml"
   when: not (file_status.results[0].stat.exists or file_status.results[1].stat.exists)
 
 - block:
@@ -24,34 +24,34 @@
       cmd: "{{ install_executable }}
             create
             manifests
-            --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
-      creates: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-scheduler-02-config.yml"
+            --dir='{{ ignition_path }}'"
+      creates: "{{ ignition_path }}/manifests/cluster-scheduler-02-config.yml"
 
   - name: Set masters as scheduleable
     lineinfile:
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-scheduler-02-config.yml"
+      path: "{{ ignition_path }}/manifests/cluster-scheduler-02-config.yml"
       regexp: '^\s{2}mastersSchedulable:\s.*$'
       line: "  mastersSchedulable: true"
 
   - name: Set ingress controller replica count
     lineinfile:
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/manifests/cluster-ingress-02-config.yml"
+      path: "{{ ignition_path }}/manifests/cluster-ingress-02-config.yml"
       insertafter: '^\s{2}domain:\s.*$'
       line: "  replicas: 3"
   when: not file_status.results[1].stat.exists
 
-- name: Generate okd ignition files
+- name: Generate ignition files
   command: 
     cmd: "{{ install_executable }}
           create
           ignition-configs
-          --dir='{{ libvirt_domain_path }}/{{ cluster_name }}'"
-    creates: "{{ libvirt_domain_path }}/{{ cluster_name }}/bootstrap.ign"
+          --dir='{{ ignition_path }}'"
+    creates: "{{ ignition_path }}/bootstrap.ign"
 
 - name: Create utility ignition file
   template:
     src: utility-ignition.ign.j2
-    dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/utility.ign"
+    dest: "{{ ignition_path }}/utility.ign"
     setype: svirt_home_t
 
 # TODO: Do this with the file module
@@ -59,5 +59,5 @@
   shell:
     cmd: "{{ item }}"
   loop:
-  - "chcon -t svirt_home_t {{ libvirt_domain_path }}/{{ cluster_name }}/*.ign"
-  - "chmod 666 {{ libvirt_domain_path }}/{{ cluster_name }}/*.ign"
+  - "chcon -t svirt_home_t {{ ignition_path }}/*.ign"
+  - "chmod 666 {{ ignition_path }}/*.ign"

@@ -1,6 +1,3 @@
-- debug:
-    var: libvirt_domain_path
-
 - fail:
     msg: "You must supply a value for either ignition_path or ignition_config"
   when:

@@ -1,25 +1,47 @@
 #!/usr/bin/env ansible-playbook
 ---
-- name: Administer okd
+- name: Administer OpenShift / OKD
   hosts: "{{ libvirt_host }}"
   gather_facts: false
   vars_files:
   - "{{ playbook_dir }}/../defaults/main.yml"
-  - "{{ playbook_dir }}/../vars/main.yml"
-  pre_tasks:
+  tasks:
   - name: Install/configure prerequisites
     tags:
-    - install_prerequisites
-    - never
+    - install_cli_tools
     import_role:
-      name: install_prerequisites
-  tasks:
+      name: install_cli_tools
+
   - name: Create libvirt network
     virt_net:
       command: define
       autostart: yes
       name: "{{ cluster_name }}.{{ network.domain_suffix }}"
-      xml: "{{ lookup('template', playbook_dir + '/../templates/libvirt-network.xml.j2') }}"
+      xml: |
+        <network>
+          <name>{{ cluster_name }}.{{ network.domain_suffix }}</name>
+          <forward mode='nat'>
+            <nat>
+              <port start='1024' end='65535'/>
+            </nat>
+          </forward>
+          <dns>
+            <forwarder addr="{{ network.upstream_dns_1 }}"/>
+            <forwarder addr="{{ network.upstream_dns_2 }}"/>
+            <forwarder addr="{{ utility_vms[0].ip }}" domain='{{ network.domain_suffix }}'/>
+          </dns>
+          <bridge name='{{ network.bridge_name }}' stp='on' delay='0'/>
+          <mac address='{{ network.mac }}'/>
+          <domain name='{{ network.domain_suffix }}' localOnly='no'/>
+          <ip address='{{ network.gateway }}' netmask='{{ network.netmask }}'>
+            <dhcp>
+              <range start='{{ network.dhcp_start }}' end='{{ network.dhcp_end }}'/>
+              {% for vm in cluster_vms %}
+              <host mac='{{ vm.mac }}' name='{{ vm.name }}' ip='{{ vm.ip }}'/>
+              {% endfor %}
+            </dhcp>
+          </ip>
+        </network>
 
   - name: Start libvirt network
     virt_net:
@@ -30,11 +52,11 @@
   - name: Create ssh directory
     file:
       state: directory
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/.ssh"
+      path: "{{ lookup('env', 'HOME') }}/.ssh"
 
   - name: Generate ssh keypair
     openssh_keypair:
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/.ssh/{{ cluster_name }}"
+      path: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
       mode: 0400
     register: ssh_key
 
@@ -42,98 +64,20 @@
     import_role:
       name: generate_ignition_files
 
-  - name: Check existing utility disk
-    stat:
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    register: utility_disk_stats
-    loop: "{{ utility_vms }}"
-
-  - name: Clone utility os disks
-    copy:
-      src: "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2"
-      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    # All disk_stats results that don't exist
-    loop: "{{ utility_disk_stats.results
-            | selectattr('stat.exists', 'equalto', false)
-            | map(attribute='item')
-            | list }}"
-
-  - name: Resize base utility disks
-    command: "qemu-img
-              resize
-              {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
-              {{ item.disk_size }}"
-    register: disk_resize
-    changed_when: "'Image resized' in disk_resize.stdout"
-    failed_when: disk_resize.rc != 0
-    # All disk_stats results that don't exist
-    loop: "{{ utility_disk_stats.results
-            | selectattr('stat.exists', 'equalto', false)
-            | map(attribute='item')
-            | list }}"
-
-  - name: Check existing cluster disks
-    stat:
-      path: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    register: cluster_disk_stats
-    loop: "{{ bootstrap_vms + master_vms + worker_vms }}"
-
-  - name: Clone cluster os disks
+  - name: Deploy virtual machine
     vars:
-      disk_type: "{{ (install_type == 'openshift')
-                    | ternary('rhcos-' + rhcos_build + '.qcow2', 'fcos-' + fcos_build + '.qcow2') }}"
-    copy:
-      src: "{{ libvirt_domain_path }}/images/{{ disk_type }}"
-      dest: "{{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2"
-    # All disk_stats results that don't exist
-    loop: "{{ cluster_disk_stats.results
-            | selectattr('stat.exists', 'equalto', false)
-            | map(attribute='item')
-            | list }}"
-
-  - name: Resize base cluster disks
-    command: "qemu-img
-              resize
-              {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
-              {{ item.disk_size }}"
-    register: disk_resize
-    changed_when: "'Image resized' in disk_resize.stdout"
-    failed_when: disk_resize.rc != 0
-    # All disk_stats results that don't exist
-    loop: "{{ cluster_disk_stats.results
-            | selectattr('stat.exists', 'equalto', false)
-            | map(attribute='item')
-            | list }}"
-
-# This doesn't work for some reason
-#  - name: Create hosts
-#    virt:
-#      command: define
-#      xml: "{{ lookup('template', playbook_dir + '/../templates/libvirt-vm.xml.j2') }}"
-#    loop: "{{ utility_vms }}"
-#
-#  - name: Start vms
-#    virt:
-#      state: running
-#      name: "{{ item.name }}"
-#    loop: "{{ utility_vms }}"
-
-  # TODO: Do this with virt module
-  - name: Create hosts
-    command:
-      cmd: "virt-install
-            --connect qemu:///system
-            -n {{ item.name }}
-            --memory {{ item.memory }}
-            --vcpus {{ item.cpus }}
-            --import
-            --os-variant=fedora{{ fedora_version }}
-            --disk {{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.name }}.qcow2
-            --network network={{ cluster_name }}.{{ network.domain_suffix }},model=virtio,mac={{ item.mac }}
-            --graphics=none
-            --qemu-commandline=\"-fw_cfg name=opt/com.coreos/config,file={{ libvirt_domain_path }}/{{ cluster_name }}/{{ item.type }}.ign\"
-            --noautoconsole"
-    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
+      coreos_type: "{{ install_type == 'okd' | ternary('fedora', 'redhat') }}"
+      ignition_path: "{{ ignition_path }}/{{ item.type }}.ign"
+      vm_name: "{{ item.name }}"
+      vm_mac: "{{ item.mac }}"
+      vm_cpus: "{{ item.cpus }}"
+      vm_memory: "{{ item.memory }}"
+      vm_disk_size: "{{ item.disk_size }}"
+      vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+      vm_network_bridge: "{{ network.bridge_name }}"
+    import_role:
+      name: libvirt_coreos_vm
+    loop: "{{ cluster_vms }}"
 
   - name: Create entries in /etc/hosts
     become: true

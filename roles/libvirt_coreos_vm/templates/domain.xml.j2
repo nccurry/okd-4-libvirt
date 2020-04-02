@@ -2,7 +2,7 @@
   <name>{{ vm_name }}</name>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
-      <libosinfo:os id="http://fedoraproject.org/fedora/{{ fedora_version }}"/>
+      <libosinfo:os id="{{ lib_os_info }}"/>
     </libosinfo:libosinfo>
   </metadata>
   <memory unit='MiB'>{{ vm_memory }}</memory>

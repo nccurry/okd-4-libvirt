@@ -1,0 +1,3 @@
+[submodule "roles/libvirt_coreos_vm"]
+	path = roles/libvirt_coreos_vm
+	url = git@github.com:nccurry/libvirt_coreos_vm.git

@@ -2,6 +2,9 @@
 
 ## Prerequisites
 
+Initialize git submodule
+git submodule init
+
 ### Get pull secret
 
 https://cloud.redhat.com/openshift/install/metal/user-provisioned
@@ -21,6 +24,9 @@ date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*
 ### Useful Commands
 
 ```
+# Update submodules
+git submodule update
+
 # Connect to console
 virsh --connect qemu:///system console <name>
 ```

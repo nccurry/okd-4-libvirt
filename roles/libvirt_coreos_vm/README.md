@@ -1,4 +1,4 @@
-# Role Name
+# libvirt_coreos_vm
 
 An ansible role to deploy [Fedora CoreOS](https://getfedora.org/en/coreos/) and [Red Hat CoreOS](https://docs.openshift.com/container-platform/latest/architecture/architecture-rhcos.html) virtual machines into QEMU/KVM.
 
@@ -17,8 +17,8 @@ A description of the settable variables for this role should go here, including 
 |-------------------------|----------|---------|---------------------------|------------------------------------------|
 | coreos_type | no | fedora | fedora, redhat | Type of CoreOS host to deploy |
 | libvirt_domain_path | no | ${HOME}/documents/vms | | Directory path to deploy virtual machine |
-| ignition_path | no | | | Path to ignition 3.0.0 file. One of ignition_config or ignition_path is required. |
-| ignition_config | no | | | YAML definition of the ignition 3.0.0 configuration. One of ignition_config or ignition_path is required. |
+| ignition_path | yes | | | Path to ignition 3.0.0 file. One of ignition_config or ignition_path is required. |
+| ignition_config | yes | | | YAML definition of the ignition 3.0.0 configuration. One of ignition_config or ignition_path is required. |
 | vm_name | no | coreos | | Alphanumeric virtual machine name |
 | vm_mac | no | 52:54:00:7b:0a:16 | | QEMU/KVM MAC address |
 | vm_cpus | no | 2 | | Number of CPU cores |
@@ -26,9 +26,10 @@ A description of the settable variables for this role should go here, including 
 | vm_disk_size | no | 20G | | Root disk size in GB. Must end in a single 'G' |
 | vm_network_name | no | default | | QEMU/KVM network to deploy domain into |
 | vm_network_bridge | no | virbr0 | | Host bridge to put virtual machine interface on |
-| vm_os_variant | no | fedora31 | | QEMU/KVM OS variant. Get list with ```osinfo-query os``` |
+| fedora_version | no | 31 | | When deploying Fedora CoreOS. Major Fedora version to use for QEMU/KVM libosprofile |
 | fcos_stream | no | stable | | Stream to download Fedora CoreOS build from. |
 | fcos_build | no | 31.20200310.3.0 | | Fedora CoreOS build number to download |
+| redhat_version | no | 8.1 | | When deploying Red Hat CoreOS. Major Red Hat version to use for QEMU/KVM libosprofile |
 | rhcos_build | no | 4.3.8 | | Red Hat CoreOS build number to download |
 
 ## Example Playbook
@@ -38,6 +39,7 @@ A description of the settable variables for this role should go here, including 
 ---
 - name: Administer virtual machine
   hosts: localhost
+  gather_facts: false
   tasks:
   - name: Deploy Fedora CoreOS virtual machine
     vars:
@@ -48,7 +50,7 @@ A description of the settable variables for this role should go here, including 
         storage:
           files:
           - path: /etc/sysctl.d/11-lowports.conf
-            conetnts:
+            contents:
               source: "data:,net.ipv4.ip_unprivileged_port_start=53"
         systemd:
           units:
@@ -81,7 +83,6 @@ A description of the settable variables for this role should go here, including 
       vm_disk_size: 120G
       vm_network_name: openshift
       vm_network_bridge: virbr0
-      vm_os_variant: rhel8.1
     import_role: 
       name: libvirt_coreos_vm
 ...
