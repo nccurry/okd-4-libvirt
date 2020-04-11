@@ -9,38 +9,46 @@
     dest: "{{ libvirt_domain_path }}/{{ vm_name}}.qcow2"
   when: not vm_disk_stat.stat.exists
 
-- name: Check disk size
-  command: "qemu-img
-            info
-            --output json
-            {{ libvirt_domain_path }}/{{ vm_name }}.qcow2"
-  changed_when: false
-  register: disk_info
+- name: Get domain info
+  virt:
+    command: info
+  register: domain_info
 
-- name: Resize disk
-  vars:
-    # Convert bytes to GB
-    current_size_gb: "{{ (disk_info.stdout | from_json)['virtual-size'] | int / 1073741824 }}"
-    # Convert to number by trimming trailing G
-    disired_size_gb: "{{ vm_disk_size | regex_replace ('G', '') }}"
-  command: "qemu-img
-            resize
-            {{ libvirt_domain_path }}/{{ vm_name }}.qcow2
-            {{ vm_disk_size }}"
-  register: disk_resize
-  changed_when: "'Image resized' in disk_resize.stdout"
-  failed_when: disk_resize.rc != 0
-  # When the difference is more than a little off, resize
-  when: (current_size_gb | int - disired_size_gb | int) | abs > 1
+- block:
+  - name: Check disk size
+    command: "qemu-img
+              info
+              --output json
+              {{ libvirt_domain_path }}/{{ vm_name }}.qcow2"
+    changed_when: false
+    register: disk_info
 
-# https://github.com/jedi4ever/veewee/issues/996
-- name: Set disk acl to allow qemu to access
-  acl:
-    path: "{{ libvirt_domain_path }}/{{ vm_name }}.qcow2"
-    entity: qemu
-    etype: user
-    permissions: rw
-    state: present
+  - name: Resize disk
+    vars:
+      # Convert bytes to GB
+      current_size_gb: "{{ (disk_info.stdout | from_json)['virtual-size'] | int / 1073741824 }}"
+      # Convert to number by trimming trailing G
+      disired_size_gb: "{{ vm_disk_size | regex_replace ('G', '') }}"
+    command: "qemu-img
+              resize
+              {{ libvirt_domain_path }}/{{ vm_name }}.qcow2
+              {{ vm_disk_size }}"
+    register: disk_resize
+    changed_when: "'Image resized' in disk_resize.stdout"
+    failed_when: disk_resize.rc != 0
+    # When the difference is more than a little off, resize
+    when: (current_size_gb | int - disired_size_gb | int) | abs > 1
+
+  # https://github.com/jedi4ever/veewee/issues/996
+  - name: Set disk acl to allow qemu to access
+    acl:
+      path: "{{ libvirt_domain_path }}/{{ vm_name }}.qcow2"
+      entity: qemu
+      etype: user
+      permissions: rw
+      state: present
+    # Only resize disk when vm doesn't already exist
+  when: "'{{ vm_name }}' not in domain_info"
 
 - name: Generate ignition file
   copy:
@@ -58,11 +66,15 @@
   virt:
     command: define
     xml: "{{ lookup('template', 'domain.xml.j2') }}"
+  register: create_domain
 
 - name: Start domain
   virt:
     state: running
     name: "{{ vm_name }}"
+  # Sometimes this task will fail with "Failed to get "write" lock" error
+  failed_when: false
+  when: create_domain.changed
 
 # Fallback when virt module doesn't work
 #- name: Create domain

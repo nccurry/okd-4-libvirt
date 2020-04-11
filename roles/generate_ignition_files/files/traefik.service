@@ -6,18 +6,7 @@ Wants=network-online.target
 [Service]
 Restart=on-failure
 ExecStartPre=/usr/bin/rm -f /%t/%n-pid /%t/%n-cid
-ExecStart=/usr/bin/podman \
-            run \
-            --conmon-pidfile /%t/%n-pid \
-            --cidfile /%t/%n-cid \
-            -d \
-            -p 6443:6443 \
-            -p 443:443 \
-            -p 80:80 \
-            -p 8080:8080 \
-            -v /home/core/traefik/traefik.yml:/etc/traefik/traefik.yml:Z \
-            -v /home/core/traefik/cluster.yml:/etc/traefik/cluster.yml:Z \
-            traefik:latest
+ExecStart=/usr/bin/podman run --conmon-pidfile /%t/%n-pid --cidfile /%t/%n-cid -d -p 6443:6443 -p 443:443 -p 80:80 -p 8080:8080 -v /home/core/traefik/traefik.yml:/etc/traefik/traefik.yml:Z -v /home/core/traefik/cluster.yml:/etc/traefik/cluster.yml:Z traefik:latest
 ExecStop=/usr/bin/podman rm -f --cidfile /%t/%n-cid
 KillMode=none
 Type=forking

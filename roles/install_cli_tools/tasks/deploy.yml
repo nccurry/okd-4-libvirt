@@ -36,43 +36,93 @@
       src: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
       dest: "{{ lookup('env', 'HOME') }}/bin/oc"
 
-- name: Check if openshift-install is already installed
-  stat:
-    path: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
-  register: ocp_stat
+- block:
+  - name: Check if openshift-install is already installed
+    stat:
+      path: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
+    register: ocp_stat
 
-- name: Download and install openshift-install
-  when: not ocp_stat.stat.exists
+  - name: Download and install openshift-install
+    when: not ocp_stat.stat.exists
+    block:
+    - name: Download openshift-install archive
+      get_url:
+        url: "{{ ocp_url }}"
+        dest: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
+
+    - name: Unarchive oc cli tools
+      unarchive:
+        src: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
+        dest: /tmp
+
+    - name: Ensure binary directory exists
+      file:
+        state: directory
+        path: "{{ lookup('env', 'HOME') }}/bin"
+
+    - name: Move openshift-install cli to binary directory
+      copy:
+        src: /tmp/openshift-install
+        dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
+        mode: 0774
+
+    - name: Create symlink to openshift-install cli
+      file:
+        state: link
+        force: yes
+        src: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
+        dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install"
+  when: install_type == 'ocp'
+
+- name: Install installation binary
   block:
-  - name: Download openshift-install archive
-    get_url:
-      url: "{{ ocp_url }}"
-      dest: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
+  - name: Check if okd-install binary is already present
+    stat:
+      path: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+    register: bin_stat
 
-  - name: Unarchive oc cli tools
-    unarchive:
-      src: "/tmp/openshift-install-{{ ocp_release }}.tar.gz"
-      dest: /tmp
+  - name: Extract and install okd-install
+    when: not bin_stat.stat.exists
+    block:
+    - name: Extract okd-install
+      command:
+        cmd: "{{ lookup('env', 'HOME') }}/bin/oc
+              adm
+              release
+              extract
+              --command=openshift-install
+              {{ okd_url }}"
+        chdir: /tmp
+        creates: /tmp/openshift-install
 
-  - name: Ensure binary directory exists
-    file:
-      state: directory
-      path: "{{ lookup('env', 'HOME') }}/bin"
+    - name: Create ~/bin
+      file:
+        state: directory
+        path: "{{ lookup('env', 'HOME') }}/bin"
 
-  - name: Move openshift-install cli to binary directory
-    copy:
-      src: /tmp/openshift-install
-      dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
-      owner: "{{ lookup('env', 'USER') }}"
-      group: "{{ lookup('env', 'USER') }}"
-      mode: 0774
+    - name: Move okd-install binary to ~/bin
+      copy:
+        src: /tmp/openshift-install
+        dest: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+        mode: 0774
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
 
-  - name: Create symlink to openshift-install cli
-    file:
-      state: link
-      force: yes
-      src: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
-      dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install"
+    - name: Create symlink to main binary
+      file:
+        state: link
+        force: yes
+        src: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
+        dest: "{{ lookup('env', 'HOME') }}/bin/okd-install"
+  when: install_type == 'okd'
 
-# TODO: Create logic to download okd-install
-
+- name: Clean up
+  file:
+    state: absent
+    path:
+  loop:
+  - /tmp/openshift-install
+  - "/tmp/oc-{{ oc_release }}.tar.gz"
+  - /tmp/oc

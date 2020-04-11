@@ -58,7 +58,7 @@ fedora_version: 31
 # Build number and stream of Fedora CoreOS
 # https://builds.coreos.fedoraproject.org/browser
 fcos_stream: stable
-fcos_build: 31.20200310.3.0
+fcos_build: 31.20200323.3.2
 
 # Major version of RHEL. Used for Libvirt libosinfo metadata
 redhat_version: 8.1

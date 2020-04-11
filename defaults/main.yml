@@ -1,5 +1,5 @@
-# Install OpenShift or OKD. Valid values are ocp or okd
-install_type: openshift
+# Install OCP or OKD. Valid values are ocp or okd
+install_type: okd
 
 # Unique alphanumeric cluster name. Used to name and reference all kinds of things
 cluster_name: ocp
@@ -10,11 +10,11 @@ oc_release: 4.4
 
 # OpenShift release number. Used to extract installation binary when installing OpenShift
 # https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
-ocp_release: 4.3.9
+ocp_release: 4.3.12
 
 # OKD release number. Used to extract installation binary when installing OKD
 # https://origin-release.svc.ci.openshift.org/
-okd_release: 4.4.0-0.okd-2020-03-27-024151
+okd_release: 4.4.0-0.okd-2020-04-10-182115
 
 # Location where pull secret is stored
 pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"

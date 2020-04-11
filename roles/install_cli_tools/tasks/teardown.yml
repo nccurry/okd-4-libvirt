@@ -1,19 +1,15 @@
-- name: Stop / disable libvirtd
-  become: true
-  systemd:
-    name: libvirtd
-    enabled: false
-    state: stopped
-
 - name: Remove files
+  vars:
+    release_number: "{{ (install_type == 'ocp') | ternary(ocp_release, okd_release) }}"
+    bin_name: "{{ (install_type == 'ocp') | ternary('openshift-install', 'okd-install') }}"
   file:
     state: absent
+    path: "{{ item }}"
   loop:
-  - "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2.xz"
-  - "{{ libvirt_domain_path }}/images/fcos-{{ fcos_build }}.qcow2"
-
-- name: Delete libvirt group
-  become: true
-  group:
-    name: libvirt
-    state: absent
+  - "{{ lookup('env', 'HOME') }}/bin/{{ bin_name }}"
+  - "{{ lookup('env', 'HOME') }}/bin/{{ bin_name }}-{{ release_number }}"
+  - /tmp/openshift-install
+  - "/tmp/oc-{{ oc_release }}.tar.gz"
+  - /tmp/oc
+  - "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
+  - "{{ lookup('env', 'HOME') }}/bin/oc"

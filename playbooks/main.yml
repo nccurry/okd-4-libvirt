@@ -9,6 +9,8 @@
   - name: Install cli tools
     import_role:
       name: install_cli_tools
+    tags:
+    - install_cli_tools
 
   - name: Create libvirt network
     virt_net:
@@ -51,9 +53,11 @@
     import_role:
       name: generate_ignition_files
 
-  - name: Deploy virtual machine
+  - name: Deploy virtual machines
     vars:
-      coreos_type: "{{ (install_type == 'okd') | ternary('fedora', 'redhat') }}"
+      # Utility host is always deployed on Fedora CoreOS
+      coreos_type: "{{ (install_type == 'ocp' and vm.type != 'utility')
+                      | ternary('redhat', 'fedora') }}"
       ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
       vm_name: "{{ vm.name }}"
       vm_mac: "{{ vm.mac }}"
@@ -64,21 +68,67 @@
       vm_network_bridge: "{{ network.bridge_name }}"
     include_role:
       name: libvirt_coreos_vm
-    loop: "{{ utility_vms }}"
+    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
     loop_control:
       loop_var: vm
 
-#  - name: Create entries in /etc/hosts
-#    become: true
-#    blockinfile:
-#      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
-#      path: /etc/hosts
-#      block: |
-#        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
-#        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
+  - name: Create entries in /etc/hosts
+    become: true
+    blockinfile:
+      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+      path: /etc/hosts
+      block: |
+        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
+        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
+
+#  - name: Teardown resources
+#    tags:
+#    - teardown
+#    - never
+#    block:
+#    - name: Remove entries in /etc/hosts
+#      become: true
+#      blockinfile:
+#        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+#        path: /etc/hosts
+#
+#    - name: Destroy virtual machines
+#      vars:
+#        # Utility host is always deployed on Fedora CoreOS
+#        coreos_type: "{{ (install_type == 'ocp' and
+#                          vm.type != 'utility')
+#                      | ternary('redhat', 'fedora') }}"
+#        ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
+#        vm_name: "{{ vm.name }}"
+#        vm_mac: "{{ vm.mac }}"
+#        vm_cpus: "{{ vm.cpus }}"
+#        vm_memory: "{{ vm.memory }}"
+#        vm_disk_size: "{{ vm.disk_size }}"
+#        vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+#        vm_network_bridge: "{{ network.bridge_name }}"
+#      include_role:
+#        name: libvirt_coreos_vm
+#        apply:
+#          tags:
+#          - teardown
+#      loop: "{{ utility_vms }}"
+#      loop_control:
+#        loop_var: vm
+#
+#    - name: Delete ignition files
+#      include_role:
+#        name: generate_ignition_files
+#        apply:
+#          tags:
+#          - teardown
+#
+#    - name: Destroy libvirt network
+#      virt_net:
+#        state: absent
+#        name: "{{ cluster_name }}.{{ network.domain_suffix }}"

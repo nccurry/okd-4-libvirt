@@ -1,8 +1,8 @@
-# Install OpenShift or OKD. Valid values are ocp or okd
-install_type: openshift
+# Install OCP or OKD. Valid values are ocp or okd
+install_type: okd
 
 # Installation executable
-install_executable: "{{ (install_type == 'openshift') | ternary('openshift-install', 'okd-install') }}"
+install_executable: "{{ (install_type == 'ocp') | ternary('openshift-install', 'okd-install') }}"
 
 # URL to download OC cli
 oc_url: "https://mirror.openshift.com/pub/openshift-v4/clients/oc/{{ oc_release }}/linux/oc.tar.gz"
