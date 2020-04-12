@@ -4,23 +4,25 @@
   - ignition_path == ''
   - ignition_config == {}
 
-- name: Configure prerequisites
-  import_tasks: configure_prerequisites.yml
-  tags:
-  - configure_prerequisites
-
-- name: Download virtual machine qcow2 image
-  import_tasks: download_image.yml
-  tags:
-  - download_image
-
-- name: Deploy virtual machine
-  import_tasks: deploy_vm.yml
-  tags:
-  - deploy_vm
-
 - name: Teardown CoreOS virtual machine
   import_tasks: teardown.yml
-  tags:
-  - teardown
-  - never
+  when: teardown | default(false)
+
+- name: Deploy CoreOS virtual machine
+  block:
+  - name: Configure prerequisites
+    import_tasks: configure_prerequisites.yml
+    tags:
+    - configure_prerequisites
+
+  - name: Download virtual machine qcow2 image
+    import_tasks: download_image.yml
+    tags:
+    - download_image
+
+  - name: Deploy virtual machine
+    import_tasks: deploy_vm.yml
+    tags:
+    - deploy_vm
+  when: not teardown | default(false)
+

@@ -68,7 +68,7 @@
       vm_network_bridge: "{{ network.bridge_name }}"
     include_role:
       name: libvirt_coreos_vm
-    loop: "{{ utility_vms + bootstrap_vms + master_vms + worker_vms }}"
+    loop: "{{ cluster_vms }}"
     loop_control:
       loop_var: vm
 
@@ -87,48 +87,48 @@
         {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
         {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
 
-#  - name: Teardown resources
-#    tags:
-#    - teardown
-#    - never
-#    block:
-#    - name: Remove entries in /etc/hosts
-#      become: true
-#      blockinfile:
-#        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
-#        path: /etc/hosts
-#
-#    - name: Destroy virtual machines
-#      vars:
-#        # Utility host is always deployed on Fedora CoreOS
-#        coreos_type: "{{ (install_type == 'ocp' and
-#                          vm.type != 'utility')
-#                      | ternary('redhat', 'fedora') }}"
-#        ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
-#        vm_name: "{{ vm.name }}"
-#        vm_mac: "{{ vm.mac }}"
-#        vm_cpus: "{{ vm.cpus }}"
-#        vm_memory: "{{ vm.memory }}"
-#        vm_disk_size: "{{ vm.disk_size }}"
-#        vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
-#        vm_network_bridge: "{{ network.bridge_name }}"
-#      include_role:
-#        name: libvirt_coreos_vm
-#        apply:
-#          tags:
-#          - teardown
-#      loop: "{{ utility_vms }}"
-#      loop_control:
-#        loop_var: vm
-#
-#    - name: Delete ignition files
-#      include_role:
-#        name: generate_ignition_files
-#        apply:
-#          tags:
-#          - teardown
-#
-#    - name: Destroy libvirt network
-#      virt_net:
-#        state: absent
-#        name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+  - name: Teardown resources
+    tags:
+    - teardown
+    - never
+    block:
+    - name: Remove entries in /etc/hosts
+      become: true
+      blockinfile:
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+        path: /etc/hosts
+
+    - name: Destroy virtual machines
+      vars:
+        # Utility host is always deployed on Fedora CoreOS
+        coreos_type: "{{ (install_type == 'ocp' and
+                          vm.type != 'utility')
+                      | ternary('redhat', 'fedora') }}"
+        ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
+        vm_name: "{{ vm.name }}"
+        vm_mac: "{{ vm.mac }}"
+        vm_cpus: "{{ vm.cpus }}"
+        vm_memory: "{{ vm.memory }}"
+        vm_disk_size: "{{ vm.disk_size }}"
+        vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+        vm_network_bridge: "{{ network.bridge_name }}"
+      include_role:
+        name: libvirt_coreos_vm
+        apply:
+          tags:
+          - teardown
+      loop: "{{ utility_vms }}"
+      loop_control:
+        loop_var: vm
+
+    - name: Delete ignition files
+      include_role:
+        name: generate_ignition_files
+        apply:
+          tags:
+          - teardown
+
+    - name: Destroy libvirt network
+      virt_net:
+        state: absent
+        name: "{{ cluster_name }}.{{ network.domain_suffix }}"

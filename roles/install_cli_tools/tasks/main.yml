@@ -1,10 +1,7 @@
 - name: Teardown prerequisites
   import_tasks: teardown.yml
-  tags:
-  - teardown
-  - never
+  when: teardown | default(false)
 
 - name: Deploy prerequities
   import_tasks: deploy.yml
-  tags:
-  - deploy
+  when: not teardown | default(false)

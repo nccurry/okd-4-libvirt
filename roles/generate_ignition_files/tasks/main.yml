@@ -4,3 +4,4 @@
 
 - name: Deploy ignition files
   import_tasks: deploy.yml
+  when: not teardown | default(false)

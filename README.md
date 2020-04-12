@@ -1,7 +1,19 @@
-# OKD 4 on Libvirt
+# OKD/OCP 4 on Libvirt
 
+These playbooks can be used to install either OpenShift Container Platform (OCP) or Origin Community Distribution of Kubernetes (OKD) into a QEMU/KVM hypervisor using libvirt.
+
+## Assumptions
+
+* The QEMU/KVM host is running Fedora 31+
+* All virtual machines will run on a single QEMU/KVM host
+* Cluster DHCP will be handled through QEMU/KVM networking
+* Cluster DNS and Load Balancing will be handled through a separate Fedora CoreOS "utility" host
+ 
 ## Prerequisites
 
+Install ansible and git
+
+Download repository
 Initialize git submodule
 git submodule init
 

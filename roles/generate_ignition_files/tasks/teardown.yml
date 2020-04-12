@@ -1,4 +1,4 @@
 - name: Remove ignition directory
   file:
     state: absent
-    path: "{{ ignition_path }}"
+    path: "{{ ignition_directory }}"

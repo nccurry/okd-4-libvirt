@@ -51,22 +51,9 @@
         }
       },
       {
-        "path": "/home/core/traefik/cluster.yml",
+        "path": "/home/core/haproxy/haproxy.cfg",
         "contents": {
-          "source": "data:,{{ lookup('template', 'traefik-provider.yml.j2') | urlencode }}"
-        },
-        "mode": 438,
-        "user": {
-          "name": "core"
-        },
-        "group": {
-          "name": "core"
-        }
-      },
-      {
-        "path": "/home/core/traefik/traefik.yml",
-        "contents": {
-          "source": "data:,{{ lookup('template', 'traefik-static-config.yml.j2') | urlencode }}"
+          "source": "data:,{{ lookup('template', 'haproxy.cfg.j2') | urlencode }}"
         },
         "mode": 438,
         "user": {
@@ -94,9 +81,9 @@
   "systemd": {
     "units": [
       {
-        "name": "traefik.service",
+        "name": "haproxy.service",
         "enabled": true,
-        "contents": "{{ lookup('file', 'traefik.service') | replace('\n', '\\n') }}"
+        "contents": "{{ lookup('file', 'haproxy.service') | replace('\n', '\\n') }}"
       },
       {
         "name": "coredns.service",
