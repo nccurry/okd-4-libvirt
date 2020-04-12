@@ -1,7 +1,8 @@
-# Host running Libvirt. The ansible playbooks get run on this host
+# Host running Libvirt. The ansible playbooks get run on this host.
+# QEMU/KVM will be installed and configured if it is not already present
 libvirt_host: localhost
 
-# Install OpenShift Container Platform or Origin Community Distribution of Kubernetes.
+# Install OpenShift Container Platform or Origin Community Distribution of Kubernetes
 # Valid values are ocp or okd
 install_type: okd
 
@@ -40,6 +41,8 @@ pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"
 ignition_directory: "{{ lookup('env', 'HOME') }}/{{ install_type }}/{{ cluster_name }}"
 
 # Libvirt network information
+# MAC addresses can be generated for KVM using
+# date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/'
 network:
   domain_suffix: lab.local
   bridge_name: virbr2

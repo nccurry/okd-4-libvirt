@@ -34,12 +34,11 @@
       loop_var: vm
 
   - name: Delete ignition files
+    vars:
+      teardown: true
     include_role:
       name: generate_ignition_files
-      apply:
-        tags:
-        - teardown
-
+      
   - name: Destroy libvirt network
     virt_net:
       state: absent
