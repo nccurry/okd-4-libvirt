@@ -11,6 +11,7 @@ They are useful to set up an OKD/OCP lab on some spare hardware and to demonstra
 * All virtual machines will run on a single QEMU/KVM host
 * Cluster DHCP will be handled through QEMU/KVM networking
 * Cluster DNS and Load Balancing will be handled through a separate Fedora CoreOS "utility" host (via CoreDNS and HAProxy)
+* The user ansible is using has sudo permissions on the QEMU/KVM host
  
 ## Prerequisites
 
@@ -48,8 +49,21 @@ Put it where ansible can find it and modify the ```pull_secret_path``` variable 
 ## Deploy cluster
 
 ```
+# Execute playbook
 ./playbooks/deploy.yml -v
+
+# Wait for bootstrap process to complete
+okd-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
+# or
+openshift-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
+
+# Wait for installation process to complete
+okd-install wait-for install-complete --dir ~/path/to/ignition --log-level debug
+# or
+openshift-install wait-for install-complete --dir ~/path/to/ignition --log-level debug
 ```
+
+The cluster uses the public ssh key in ~/.ssh/id_rsa.pub for ssh authentication so you can log in using that key and the core user.
 
 ## Teardown cluster and cleanup all files
 ```
@@ -66,14 +80,7 @@ Often when attempting to start the virtual machines the [virt](https://docs.ansi
 
 You can work around this issue by starting the virtual machines manually from within virt-manager.
 
-## Miscellaneous
-
-```
-# MAC can be generated for KVM using
-date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/'
-```
-
-### Useful Documentation
+## Useful Links
 
 * Latest Fedora CoreOS Builds
   * https://builds.coreos.fedoraproject.org/browser
