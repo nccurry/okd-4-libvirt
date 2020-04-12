@@ -46,6 +46,11 @@ Put it where ansible can find it and modify the ```pull_secret_path``` variable 
 
 ### Fill out variables in [defaults/main.yml](defaults/main.yml)
 
+```
+# Fill out parameters as you see fit
+vi defaults/main.yml
+```
+
 ## Deploy cluster
 
 ```
