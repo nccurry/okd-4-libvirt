@@ -72,9 +72,33 @@ https://console-openshift-console.apps.<cluster_name>.<domain_suffix>
 For example:
 https://console-openshift-console.apps.ocp.lab.local
 
-The kubeadmin credentials are stored in:
-<ignition_directory>/auth/kubeadmin-password
+You can get the kubeadmin credentials via:
 
+```
+# Location of your ignition files
+ignition_directory=~/ocp/ocp
+cat ${ignition_directory}/auth/kubeadmin-password
+```
+
+You can log using oc in via:
+
+```
+# Location of your ignition files
+ignition_directory=~/ocp/ocp
+
+# Value for cluster_name
+cluster_name=ocp
+
+# Value for network.domain_suffix
+base_domain=lab.local
+
+# Login
+oc login \
+  --insecure-skip-tls-verify=true \
+  -u kubeadmin \
+  -p $(cat ${ignition_directory}/auth/kubeadmin-password) \
+  https://api.${cluster_name}.${base_domain}:6443 
+```
 
 ## Teardown cluster and cleanup all files
 ```
