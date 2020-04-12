@@ -65,6 +65,17 @@ openshift-install wait-for install-complete --dir ~/path/to/ignition --log-level
 
 The cluster uses the public ssh key in ~/.ssh/id_rsa.pub for ssh authentication so you can log in using that key and the core user.
 
+Entries are created in /etc/hosts to allow you to log in to the default cluster routes.
+You can reach the console via: 
+https://console-openshift-console.apps.<cluster_name>.<domain_suffix> 
+
+For example:
+https://console-openshift-console.apps.ocp.lab.local
+
+The kubeadmin credentials are stored in:
+<ignition_directory>/auth/kubeadmin-password
+
+
 ## Teardown cluster and cleanup all files
 ```
 ./playbooks/teardown.yml -v
