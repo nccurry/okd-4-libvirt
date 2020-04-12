@@ -6,91 +6,91 @@
   vars_files:
   - "{{ playbook_dir }}/../defaults/main.yml"
   tasks:
-  - name: Install cli tools
-    import_role:
-      name: install_cli_tools
-    tags:
-    - install_cli_tools
+  - name: Deploy resources
+    block:
+    - name: Install cli tools
+      import_role:
+        name: install_cli_tools
+      tags:
+      - install_cli_tools
 
-  - name: Create libvirt network
-    virt_net:
-      command: define
-      autostart: yes
-      name: "{{ cluster_name }}.{{ network.domain_suffix }}"
-      xml: |
-        <network>
-          <name>{{ cluster_name }}.{{ network.domain_suffix }}</name>
-          <forward mode='nat'>
-            <nat>
-              <port start='1024' end='65535'/>
-            </nat>
-          </forward>
-          <dns>
-            <forwarder addr="{{ network.upstream_dns_1 }}"/>
-            <forwarder addr="{{ network.upstream_dns_2 }}"/>
-            <forwarder addr="{{ utility_vms[0].ip }}" domain='{{ network.domain_suffix }}'/>
-          </dns>
-          <bridge name='{{ network.bridge_name }}' stp='on' delay='0'/>
-          <mac address='{{ network.mac }}'/>
-          <domain name='{{ network.domain_suffix }}' localOnly='no'/>
-          <ip address='{{ network.gateway }}' netmask='{{ network.netmask }}'>
-            <dhcp>
-              <range start='{{ network.dhcp_start }}' end='{{ network.dhcp_end }}'/>
-              {% for vm in cluster_vms %}
-              <host mac='{{ vm.mac }}' name='{{ vm.name }}' ip='{{ vm.ip }}'/>
-              {% endfor %}
-            </dhcp>
-          </ip>
-        </network>
+    - name: Create libvirt network
+      virt_net:
+        command: define
+        autostart: yes
+        name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+        xml: |
+          <network>
+            <name>{{ cluster_name }}.{{ network.domain_suffix }}</name>
+            <forward mode='nat'>
+              <nat>
+                <port start='1024' end='65535'/>
+              </nat>
+            </forward>
+            <dns>
+              <forwarder addr="{{ network.upstream_dns_1 }}"/>
+              <forwarder addr="{{ network.upstream_dns_2 }}"/>
+              <forwarder addr="{{ utility_vms[0].ip }}" domain='{{ network.domain_suffix }}'/>
+            </dns>
+            <bridge name='{{ network.bridge_name }}' stp='on' delay='0'/>
+            <mac address='{{ network.mac }}'/>
+            <domain name='{{ network.domain_suffix }}' localOnly='no'/>
+            <ip address='{{ network.gateway }}' netmask='{{ network.netmask }}'>
+              <dhcp>
+                <range start='{{ network.dhcp_start }}' end='{{ network.dhcp_end }}'/>
+                {% for vm in cluster_vms %}
+                <host mac='{{ vm.mac }}' name='{{ vm.name }}' ip='{{ vm.ip }}'/>
+                {% endfor %}
+              </dhcp>
+            </ip>
+          </network>
 
-  - name: Start libvirt network
-    virt_net:
-      autostart: yes
-      state: active
-      name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+    - name: Start libvirt network
+      virt_net:
+        autostart: yes
+        state: active
+        name: "{{ cluster_name }}.{{ network.domain_suffix }}"
 
-  - name: Generate ignition files
-    import_role:
-      name: generate_ignition_files
+    - name: Generate ignition files
+      import_role:
+        name: generate_ignition_files
 
-  - name: Deploy virtual machines
-    vars:
-      # Utility host is always deployed on Fedora CoreOS
-      coreos_type: "{{ (install_type == 'ocp' and vm.type != 'utility')
-                      | ternary('redhat', 'fedora') }}"
-      ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
-      vm_name: "{{ vm.name }}"
-      vm_mac: "{{ vm.mac }}"
-      vm_cpus: "{{ vm.cpus }}"
-      vm_memory: "{{ vm.memory }}"
-      vm_disk_size: "{{ vm.disk_size }}"
-      vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
-      vm_network_bridge: "{{ network.bridge_name }}"
-    include_role:
-      name: libvirt_coreos_vm
-    loop: "{{ cluster_vms }}"
-    loop_control:
-      loop_var: vm
+    - name: Deploy virtual machines
+      vars:
+        # Utility host is always deployed on Fedora CoreOS
+        coreos_type: "{{ (install_type == 'ocp' and vm.type != 'utility')
+                        | ternary('redhat', 'fedora') }}"
+        ignition_path: "{{ ignition_directory }}/{{ vm.type }}.ign"
+        vm_name: "{{ vm.name }}"
+        vm_mac: "{{ vm.mac }}"
+        vm_cpus: "{{ vm.cpus }}"
+        vm_memory: "{{ vm.memory }}"
+        vm_disk_size: "{{ vm.disk_size }}"
+        vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+        vm_network_bridge: "{{ network.bridge_name }}"
+      include_role:
+        name: libvirt_coreos_vm
+      loop: "{{ cluster_vms }}"
+      loop_control:
+        loop_var: vm
 
-  - name: Create entries in /etc/hosts
-    become: true
-    blockinfile:
-      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
-      path: /etc/hosts
-      block: |
-        {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
-        {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
+    - name: Create entries in /etc/hosts
+      become: true
+      blockinfile:
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }} -->"
+        path: /etc/hosts
+        block: |
+          {{ utility_vms[0].ip }} api.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} oauth-openshift.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} console-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} downloads-openshift-console.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} default-route-openshift-image-registry.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} alertmanager-main-openshift-monitoring.apps.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} grafana-openshift-monitoring.apps.ocp.{{ cluster_name }}.{{ network.domain_suffix }}
+          {{ utility_vms[0].ip }} prometheus-k8s-openshift-monitoring.{{ cluster_name }}.{{ network.domain_suffix }}
+    when: not teardown | default(false)
 
   - name: Teardown resources
-    tags:
-    - teardown
-    - never
     block:
     - name: Remove entries in /etc/hosts
       become: true
@@ -114,9 +114,6 @@
         vm_network_bridge: "{{ network.bridge_name }}"
       include_role:
         name: libvirt_coreos_vm
-        apply:
-          tags:
-          - teardown
       loop: "{{ utility_vms }}"
       loop_control:
         loop_var: vm
@@ -132,3 +129,4 @@
       virt_net:
         state: absent
         name: "{{ cluster_name }}.{{ network.domain_suffix }}"
+    when: teardown | default(false)
