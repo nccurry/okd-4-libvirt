@@ -2,6 +2,8 @@
 
 These playbooks can be used to install either OpenShift Container Platform (OCP) or Origin Community Distribution of Kubernetes (OKD) into a QEMU/KVM hypervisor using libvirt.
 
+They are useful to set up an OKD/OCP lab on some spare hardware and to demonstrate the utility of deploying containers using systemd on Fedora CoreOS.
+
 ## Assumptions
 
 * The QEMU/KVM host is running Fedora 31+
@@ -46,13 +48,23 @@ Put it where ansible can find it and modify the ```pull_secret_path``` variable 
 ## Deploy cluster
 
 ```
-./playbooks/main.yml -v
+./playbooks/deploy.yml -v
 ```
 
-## Teardown cluster
+## Teardown cluster and cleanup all files
 ```
-./playbooks/main.yml -v -e teardown=true
+./playbooks/teardown.yml -v
 ```
+
+## Known Issues 
+
+### Failed to get "write" lock
+Often when attempting to start the virtual machines the [virt](https://docs.ansible.com/ansible/latest/modules/virt_module.html) ansible module will fail with
+
+> internal error: process exited while connecting to monitor: 2020-04-12T17:43:32.040107Z qemu-system-x86_64: -drive file=/home/user/documents/vms/ocp-bootstrap.lab.local.qcow2,format=qcow2,if=none,id=drive-virtio-disk0: Failed to get "write" lock
+> Is another process using the image [/home/user/documents/vms/ocp-bootstrap.lab.local.qcow2]?
+
+You can work around this issue by starting the virtual machines manually from within virt-manager.
 
 ## Miscellaneous
 
@@ -63,12 +75,25 @@ date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*
 
 ### Useful Documentation
 
-* https://builds.coreos.fedoraproject.org/browser
-* https://origin-release.svc.ci.openshift.org/
-* https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/
-* https://github.com/coreos/toolbox#toolbox---bring-your-tools-with-you
-* https://www.redhat.com/sysadmin/podman-shareable-systemd-services
-* https://cbonte.github.io/haproxy-dconv/2.2/configuration.html
-* https://www.rapidtables.com/convert/number/octal-to-decimal.html
-* https://libvirt.org/formatnetwork.html
+* Latest Fedora CoreOS Builds
+  * https://builds.coreos.fedoraproject.org/browser
+* Fedora CoreOS Documentation
+  * https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/
+* Latest Origin Community Distribution of Kubernetes Builds
+  * https://origin-release.svc.ci.openshift.org/
+* Latest OpenShift Container Platform Builds
+  * https://openshift-release.svc.ci.openshift.org/
+  * https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
+* Latest Red Hat CoreOS builds
+  * https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
+* CoreOS Toolbox
+  * https://github.com/coreos/toolbox#toolbox---bring-your-tools-with-you
+* Running podman containers with systemd
+  * https://www.redhat.com/sysadmin/podman-shareable-systemd-services
+* HAProxy configuration
+  * https://cbonte.github.io/haproxy-dconv/2.2/configuration.html
+* Convert octal numbers to decimal (useful for ignition file permissions)
+  * https://www.rapidtables.com/convert/number/octal-to-decimal.html
+* Libvirt Network XML definition
+  * https://libvirt.org/formatnetwork.html
 
