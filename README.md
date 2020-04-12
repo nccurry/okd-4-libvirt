@@ -57,7 +57,8 @@ vi defaults/main.yml
 # Execute playbook
 ./playbooks/deploy.yml -v
 
-# Wait for bootstrap process to complete - once this finishes you can delete the bootstrap vm to save resources
+# Wait for bootstrap process to complete
+# Once this finishes you can delete the bootstrap vm to save resources
 okd-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
 # or
 openshift-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
@@ -68,14 +69,14 @@ okd-install wait-for install-complete --dir ~/path/to/ignition --log-level debug
 openshift-install wait-for install-complete --dir ~/path/to/ignition --log-level debug
 ```
 
-The cluster uses the public ssh key in ~/.ssh/id_rsa.pub for ssh authentication so you can log in using that key and the core user.
+The cluster uses the public ssh key in ```~/.ssh/id_rsa.pub``` for ssh authentication so you can log in using that key and the core user.
 
-Entries are created in /etc/hosts to allow you to access the default cluster routes.
+Entries are created in ```/etc/hosts``` to allow you to access the default cluster routes.
 You can reach the console via: 
-https://console-openshift-console.apps.<cluster_name>.<domain_suffix> 
+```https://console-openshift-console.apps.<cluster_name>.<domain_suffix>```
 
 For example:
-https://console-openshift-console.apps.ocp.lab.local
+```https://console-openshift-console.apps.ocp.lab.local```
 
 You can get the kubeadmin credentials via:
 
