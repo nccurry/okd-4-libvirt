@@ -112,9 +112,10 @@
         vm_disk_size: "{{ vm.disk_size }}"
         vm_network_name: "{{ cluster_name }}.{{ network.domain_suffix }}"
         vm_network_bridge: "{{ network.bridge_name }}"
+        teardown: true
       include_role:
         name: libvirt_coreos_vm
-      loop: "{{ utility_vms }}"
+      loop: "{{ cluster_vms }}"
       loop_control:
         loop_var: vm
 
