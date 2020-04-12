@@ -52,7 +52,7 @@ Put it where ansible can find it and modify the ```pull_secret_path``` variable 
 # Execute playbook
 ./playbooks/deploy.yml -v
 
-# Wait for bootstrap process to complete
+# Wait for bootstrap process to complete - once this finishes you can delete the bootstrap vm to save resources
 okd-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
 # or
 openshift-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug

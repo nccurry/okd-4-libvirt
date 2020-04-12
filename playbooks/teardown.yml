@@ -38,7 +38,7 @@
       teardown: true
     include_role:
       name: generate_ignition_files
-      
+
   - name: Destroy libvirt network
     virt_net:
       state: absent
