@@ -25,7 +25,7 @@ sudo dnf -y install python3-pip git
 pip3 install ansible --user
 
 # Ensure default local pip bin directory is on PATH
-echo "export PATH=$PATH:~/.local/bin" >> ~/.bashrc
+echo "export PATH=${PATH}:~/.local/bin" >> ~/.bashrc
 source ~/.bashrc
 
 # Verify ansible is installed
@@ -33,6 +33,7 @@ ansible --version
 
 # Clone repository
 git clone git@github.com:nccurry/okd-4-libvirt.git
+cd okd-4-libvirt
 
 # Initialize submodules
 git submodule update --remote
@@ -83,6 +84,8 @@ You can get the kubeadmin credentials via:
 ```
 # Location of your ignition files
 ignition_directory=~/ocp/ocp
+
+# Print value
 cat ${ignition_directory}/auth/kubeadmin-password
 ```
 
