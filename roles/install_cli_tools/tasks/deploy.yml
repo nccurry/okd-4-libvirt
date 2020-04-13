@@ -121,7 +121,7 @@
 - name: Clean up
   file:
     state: absent
-    path:
+    path: "{{ item }}"
   loop:
   - /tmp/openshift-install
   - "/tmp/oc-{{ oc_release }}.tar.gz"
