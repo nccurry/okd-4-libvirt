@@ -1,4 +1,4 @@
-# OKD/OCP 4 on Libvirt
+# OKD/OCP 4 on QEMU/KVM
 
 These playbooks can be used to install either OpenShift Container Platform (OCP) or Origin Community Distribution of Kubernetes (OKD) into a QEMU/KVM hypervisor using libvirt.
 
