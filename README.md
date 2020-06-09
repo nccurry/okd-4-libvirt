@@ -7,7 +7,7 @@ They are useful to set up an OKD/OCP lab on some spare hardware and to demonstra
 ## Assumptions
 
 * The QEMU/KVM host is running Fedora 31+
-* The QEMU/KVM host has 32GB+ Memory and a modern multi-core CPU
+* The QEMU/KVM host has 48GB+ memory and a modern multi-core CPU. 64GB+ memory is ideal.
 * All virtual machines will run on a single QEMU/KVM host
 * Cluster DHCP will be handled through QEMU/KVM networking
 * Cluster DNS and Load Balancing will be handled through a separate Fedora CoreOS "utility" host (via CoreDNS and HAProxy)
@@ -108,6 +108,19 @@ oc login \
   -u kubeadmin \
   -p $(cat ${ignition_directory}/auth/kubeadmin-password) \
   https://api.${cluster_name}.${base_domain}:6443 
+```
+
+You can also use the admin kubeconfig file to skip authenticating
+
+```
+# Location of your ignition files
+ignition_directory=~/ocp/ocp
+
+export KUBECONFIG=${ignition_directory}
+
+oc whoami
+
+oc get co
 ```
 
 ## Teardown cluster and cleanup all files
