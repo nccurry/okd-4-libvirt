@@ -36,7 +36,9 @@
       src: "{{ lookup('env', 'HOME') }}/bin/oc-{{ oc_release }}"
       dest: "{{ lookup('env', 'HOME') }}/bin/oc"
 
-- block:
+- name: Install ocp installation binary
+  when: install_type == 'ocp'
+  block:
   - name: Check if openshift-install is already installed
     stat:
       path: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
@@ -74,9 +76,9 @@
         force: yes
         src: "{{ lookup('env', 'HOME') }}/bin/openshift-install-{{ ocp_release }}"
         dest: "{{ lookup('env', 'HOME') }}/bin/openshift-install"
-  when: install_type == 'ocp'
 
-- name: Install installation binary
+- name: Install okd installation binary
+  when: install_type == 'okd'
   block:
   - name: Check if okd-install binary is already present
     stat:
@@ -116,7 +118,6 @@
         force: yes
         src: "{{ lookup('env', 'HOME') }}/bin/okd-install-{{ okd_release }}"
         dest: "{{ lookup('env', 'HOME') }}/bin/okd-install"
-  when: install_type == 'okd'
 
 - name: Clean up
   file:

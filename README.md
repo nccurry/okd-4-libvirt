@@ -59,7 +59,8 @@ vi defaults/main.yml
 ./playbooks/deploy.yml -v
 
 # Wait for bootstrap process to complete
-# Once this finishes you can delete the bootstrap vm to save resources
+# Once this finishes you can delete the bootstrap vm manually to save resources
+# The ignition directory is specified in defaults/main.yml
 okd-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug
 # or
 openshift-install wait-for bootstrap-complete --dir ~/path/to/ignition --log-level debug

@@ -4,10 +4,10 @@ libvirt_host: localhost
 
 # Install OpenShift Container Platform or Origin Community Distribution of Kubernetes
 # Valid values are ocp or okd
-install_type: okd
+install_type: ocp
 
 # Unique alphanumeric cluster name. Used to name and reference all kinds of things uniquely
-cluster_name: okd
+cluster_name: ocp
 
 # Version of oc client to install. Used to extract installer and access the cluster
 # https://mirror.openshift.com/pub/openshift-v4/clients/oc
@@ -16,23 +16,23 @@ oc_release: 4.4
 # OKD release number. Used to extract installation binary when installing OKD
 # Only needed when installing Origin Community Distribution of Kubernetes (i.e. install_type=okd)
 # https://origin-release.svc.ci.openshift.org/
-okd_release: 4.4.0-0.okd-2020-04-12-123622
+okd_release: 4.4.0-0.okd-2020-05-23-055148-beta5
 
 # OpenShift release number. Used to extract installation binary when installing OpenShift
 # Only needed when installing OpenShift Container Platform (i.e. install_type=ocp)
 # https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
-ocp_release: 4.3.12
+ocp_release: 4.4.7
 
 # Red Hat CoreOS build number. Must be of the form X.Y.Z (i.e. 4.3.8) and not latest
 # Only needed when installing OpenShift Container Platform (i.e. install_type=ocp)
 # http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
-rhcos_build: 4.3.8
+rhcos_build: 4.4.3
 
 # Build number and stream of Fedora CoreOS
 # Needed for both ocp and okd
 # https://builds.coreos.fedoraproject.org/browser
-fcos_stream: testing-devel
-fcos_build: 31.20200407.20.2
+fcos_stream: stable
+fcos_build: 31.20200517.3.0
 
 # Location where pull secret is stored
 pull_secret_path: "{{ playbook_dir + '/../pull-secret.txt' }}"
